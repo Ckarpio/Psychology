@@ -1,0 +1,31 @@
+.emo-anxiety {
+    background: rgba(213, 244, 237, 0.7); 
+}
+
+.emo-sadness {
+    background: rgba(221, 232, 255, 0.7);
+}
+
+.emo-anger {
+    background: rgba(252, 232, 201, 0.7);
+}
+
+.emo-stress {
+    background: rgba(237, 229, 255, 0.7);
+}
+
+.emo-loneliness {
+    background: rgba(222, 227, 255, 0.7);
+}
+
+.emo-apathy {
+    background: rgba(238, 239, 246, 0.7);
+}
+
+.emo-panic {
+    background: rgba(248, 219, 223, 0.7);
+}
+
+.emo-fear {
+    background: rgba(228, 223, 255, 0.7);
+}
