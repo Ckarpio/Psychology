@@ -1,10 +1,9 @@
-const  Nangry = "Злость"
-const Nsad = "Грусть"
-const Nfear  = "Страх"
-const Npannik = "Паника"
-const Nstress = "Стресс"
-let Inte_angry = 0
-let Inte_sad = 0
-let Inte_fear = 0
-let Inte_pannik = 0
-let Inte_stress = 0
+const NameEmo = "Гнев"
+const  DescriEmo = "Гнев — это энергия. Он показывает, что твои границы были нарушены. Важно не подавлять его, а научиться выражать конструктивно" 
+let intensityEmo = 6
+let powerEmo = true 
+console.log(NameEmo, DescriEmo, intensityEmo, powerEmo)
+Number(intensityEmo)
+Boolean(powerEmo)
+console.log(typeof(NameEmo), typeof(DescriEmo), typeof(intensityEmo), typeof(powerEmo))
+
