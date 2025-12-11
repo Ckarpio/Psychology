@@ -1,0 +1,171 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+/* Внешняя обёртка*/
+.wrapper {
+  width: 70%;
+  margin: 0 auto;
+}
+
+/* Базовый контейнер */
+.page-container {
+  width: 100%;
+  min-width: 300px;
+  margin: 20px auto;
+  border-radius: 15px;
+}
+
+/* =================== HEADER =================== */
+.page-container.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.header-p1 {
+  font-size: 40px;
+  font-weight: 400;
+}
+
+.header-p2 {
+  font-size: 20px;
+  color: #717182;
+}
+
+/* =========== КАК РАБОТАЕТ ПРИЛОЖЕНИЕ =========== */
+.page-container.work {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px;
+  border: 1px solid rgb(236, 234, 234);
+}
+
+.htw-header {
+  font-size: 16px;
+}
+
+.htw-ul {
+  margin: 10px 0 0;
+  padding-left: 20px;
+}
+
+.htw-ul-li {
+  color: #717182;
+  margin-top: 5px;
+  margin-bottom: 15px;
+}
+
+.htw-ul-li:last-child {
+  margin-bottom: 0;
+}
+
+.htw-ul-li::marker {
+  color: purple;
+}
+
+/* =================== ЭМОЦИИ =================== */
+.page-container.emo {
+  padding: 0 0 20px;
+}
+
+.emotoggle {
+  width: 100%;
+  padding: 2px;
+  margin-bottom: 20px;
+  display: flex;
+  background: #eaeaec;
+  border-radius: 15px;
+}
+
+button.toggle-btn {
+  margin: 1px;
+  border-radius: 15px;
+  border: none;
+  font-size: 16px;
+  width: 50%;
+  height: 30px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  background: none;
+}
+
+button.toggle-btn-active {
+  background-color: #ffffff;
+}
+
+.grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px 20px;
+}
+
+/* при сужении экрана уменьшаем количество колонок */
+@media (max-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+button.emotion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100px;
+    border-radius: 15px;
+    border: none;
+    font-size: 15px;
+    cursor: pointer;
+    transition: transform 0.30s ease, box-shadow 0.30s ease;
+    transform-origin: center;
+}
+
+button.emotion:hover {
+    transform: scale(1.1);              
+    box-shadow: 0 6px 14px rgba(0, 0, 0, .12);
+}
+
+/* =================== FOOTER =================== */
+.page-container.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 20px;
+  color: #717182;
+  text-align: center;
+}
+
+.footer-text-one {
+      font-size: 14px;
+}
+
+.footer-text-two {
+      font-size: 12px;
+}
