@@ -10,4 +10,3 @@ console.log(`nameEmo: ${nameEmo}\ndescriEmo: ${descriEmo}\nintensityEmo: ${inten
 console.log(`nameEmo type: ${typeof nameEmo}\ndescriEmo type: ${typeof descriEmo}\nintensityEmo type: ${typeof intensityEmo}\npowerEmo type: ${typeof powerEmo}\n`)
 console.log(`parsed intensityEmo value: ${parsedIntensity}\nparsed powerEmo value: ${parsedPower}\n`)
 console.log(`parsed intensityEmo value type: ${typeof parsedIntensity}\nparsed powerEmoValue type: ${ typeof parsedPower}\n`)
-
