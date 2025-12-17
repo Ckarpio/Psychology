@@ -1,5 +1,5 @@
-const emoName = 5   
-const emoIntensiv = "5"
+const emoName = 'злость'  
+const emoIntensiv = 5
 const intensivNumber= Number(emoIntensiv)
 //const emoName = 5  
 //let emoIntensiv = "Пять"
