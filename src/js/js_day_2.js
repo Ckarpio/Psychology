@@ -1,10 +1,9 @@
-const emoName = "злость"   
+const emoName = 5   
 const emoIntensiv = "5"
 const intensivNumber= Number(emoIntensiv)
 //const emoName = 5  
 //let emoIntensiv = "Пять"
 if (typeof(emoName)!="string"){
-    console.log(typeof(emoIntensiv))
     console.error("Эмоция не найдена")
     return
 }
