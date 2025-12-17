@@ -1,19 +1,32 @@
 const EmoName = "злость"   
-let EmoIntensiv = 5
+const EmoIntensiv = "1"
+const intensivNumber= Number(EmoIntensiv)
 //const EmoName = 5  
 //let EmoIntensiv = "Пять"
 if (typeof(EmoName)!="string"){
+    console.log(typeof(EmoIntensiv))
     console.error("Эмоция не найдена")
     return
 }
-else{
-    if(typeof(EmoIntensiv)=="number"){
-        if(EmoIntensiv>=5){
-            console.log("Coвет")
-        }   
+if (typeof (EmoIntensiv)=="string"){
+    if (Number(EmoIntensiv)>=5){
+        console.log("Совет")
+
+
     }
     else{
-        console.error("Интесивность не найдена")
-        return
+        console.log("Низкая интесивность")
+
     }
+}
+else{
+    if (EmoIntensiv>=5){
+        console.log("Совет")
+
+    }
+    else{
+        console.log("Низкая интесивность")
+
+    }
+
 }
