@@ -1,5 +1,5 @@
 const emoName = 'злость'  
-const emoIntensiv = "true"
+const emoIntensiv = false
 const intensivNumber= Number(emoIntensiv)
 //const emoName = 5  
 //let emoIntensiv = "Пять"
@@ -17,8 +17,14 @@ if (typeof (emoIntensiv)=="string" || typeof(emoIntensiv)=="boolean" || typeof(e
         console.log("Низкая интесивность1")
 
     }
-}
 
+
+}
+else{
+    console.log("Эмоция не найдена")
+
+
+}
 
 
 
