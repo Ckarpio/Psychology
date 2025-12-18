@@ -21,7 +21,7 @@ if (typeof (emoIntensiv)=="string" || typeof(emoIntensiv)=="boolean" || typeof(e
 
 }
 else{
-    console.log("Эмоция не найдена")
+    console.log("Интенсивность не найдена")
 
 
 }
