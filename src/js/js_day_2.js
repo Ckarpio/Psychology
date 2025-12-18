@@ -23,7 +23,7 @@ else{
 }
 */
 
-if (!emoName || (emoName && typeof emoName === 'string' && emoName.length === 0)){
+if (!emoName || (emoName && typeof emoName === 'string' && emoName.length === 0) || !(typeof emoName === 'string')){
     console.error("Эмоция не найдена")
     return
 }
