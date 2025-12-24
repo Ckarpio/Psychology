@@ -2,7 +2,6 @@ const negativEmo=["Злость", "Грусть", "Паника", "Одиноч�
 const poistivEmo=["Радость", "Уверенность", "Любовь"]
 const Emo = negativEmo.concat(poistivEmo)
 const a = "Эмоция:"
-console.log(negativEmo.join("  "))
 console.log(a.concat(negativEmo))
 negativEmo.forEach(a => {
     console.log("Эмоция:", a )
