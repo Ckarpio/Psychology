@@ -1,4 +1,4 @@
-    const negativEmo=["Злость", "Грусть", "Паника", "Одиночество", "Стресс", "Тревога"]
+  const negativEmo=["Злость", "Грусть", "Паника", "Одиночество", "Стресс", "Тревога"]
     const poistivEmo=["Радость", "Уверенность", "Любовь"]
     const Emo = negativEmo.concat(poistivEmo)
     const a = "Эмоция:"
@@ -9,7 +9,10 @@
     const symbol = negativEmo.map(n => n.length)
     console.log(symbol.reduce((prev,current)=> prev+=current))
 
-console.log(negativEmo.filter([i]%2===0))
-
-
-
+let indexEmo=[]
+negativEmo.forEach((element, index)=>{
+  if(index%2===0){
+    indexEmo.push(element)
+  }
+})
+console.log(indexEmo)
