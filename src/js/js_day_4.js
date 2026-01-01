@@ -23,6 +23,8 @@ if(Emo.type="negative"){
 
 let intensiv = Object.assign({}, Emo) // Дублирование объекта
 
+Emo.material.music.push("Beach Boy")
+
 console.log(intensiv)
 
 console.log(Emo)
