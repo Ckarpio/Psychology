@@ -27,8 +27,6 @@ Emo.material.music.push("Beach Boy")
 Emo.material.exercises.pop("№1")
 
 
-console.log(intensiv)
-
 console.log(Emo)
 
 console.log(Emo.material.music)
