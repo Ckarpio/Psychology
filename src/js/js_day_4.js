@@ -5,7 +5,7 @@ const Emo ={
     material:{
         music: ["Beatles"],
         video:[],
-        exercises:[],
+        exercises:["№1"],
         articles:[],
     }   
 
@@ -24,6 +24,8 @@ if(Emo.type="negative"){
 let intensiv = Object.assign({}, Emo) // Дублирование объекта
 
 Emo.material.music.push("Beach Boy")
+Emo.material.exercises.pop("№1")
+
 
 console.log(intensiv)
 
