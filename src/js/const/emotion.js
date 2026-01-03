@@ -1,0 +1,16 @@
+export const emotions=[{code:1, lable:'Гнев', effec:'negative ', color:'orange', ico:''}, 
+{code:2, lable:'Грусть', effec:'negative ', color:'blue', ico:''}, 
+{code:3, lable:'Апатия', effec:'negative ', color:'slate', ico:''},
+{code:4, lable:'Одиночество', effec:'negative ', color:'indigo', ico:''},
+{code:5, lable:'Тревога', effec:'negative ', color:'teal', ico:''},
+{code:6, lable:'Страх', effec:'negative ', color:'vielet', ico:''},
+{code:7, lable:'Стресс', effec:'negative ', color:'purple', ico:''},
+{code:8, lable:'Паника', effec:'negative ', color:'rose', ico:''},
+//позитивные
+{code:9, lable:'Радость', effec:'positive ', color:'yellow', ico:''},
+{code:10, lable:'Любовь', effec:'positive ', color:'pink', ico:''},
+{code:11, lable:'Вдохновение', effec:'positive ', color:'cyan', ico:''},
+{code:12, lable:'Спокойствие', effec:'positive ', color:'lime', ico:''},
+{code:13, lable:'Благодарность', effec:'positive ', color:'green', ico:''},
+{code:14, lable:'Увереность', effec:'positive ', color:'emerald', ico:''},
+]
