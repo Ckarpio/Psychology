@@ -5,7 +5,7 @@ export const emotions=[{code:"anger", label:'Гнев', effect:'negative ', colo
 {code:'anxiety', label:'Тревога', effect:'negative ', color:'teal', ico:''},
 {code:'fear' , label:'Страх', effect:'negative ', color:'vielet', ico:''},
 {code:'stress', label:'Стресс', effect:'negative ', color:'purple', ico:''},
-{code:'зanic', label:'Паника', effect:'negative ', color:'rose', ico:''},
+{code:'panic', label:'Паника', effect:'negative ', color:'rose', ico:''},
 //позитивные
 {code:'joy', label:'Радость', effect:'positive ', color:'yellow', ico:''},
 {code:'love', label:'Любовь', effect:'positive ', color:'pink', ico:''},
