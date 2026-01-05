@@ -1,5 +1,5 @@
 import { emotions } from "./const/emotion.js";
-import { emotionsProperties } from "./const/emotionProperties.js";
+import {emotionsProperties} from "./const/emotionProperties.js"
 
 
 function findEmo(emotionsCode){
@@ -11,7 +11,7 @@ function findEmoProperties(emotions){
 } 
 
 function main(){
-    let emoCode="anger"
+    let emoCode="joy"
     let foundEmotions = findEmo(emoCode)
     if (!foundEmotions){
         console.log("Эмоция не найдена")
@@ -19,6 +19,12 @@ function main(){
     }
 
     let foundProperties = findEmoProperties(foundEmotions)
+    if (!foundProperties){
+        console.log('Свойства не найдены')
+        return
+    }
+
+    
     console.log("Найденная эмоция:" , foundEmotions)
     console.log("Свойства эмоции:", foundProperties )
     
