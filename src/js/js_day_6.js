@@ -32,7 +32,7 @@ function findEmoProperties(emotions){
 
 function main(){
     try{
-    let emoCode="joy"
+    let emoCode="stress"
     let foundEmotions = findEmo(emoCode)
     if (!foundEmotions){
         console.log("Эмоция не найдена")
