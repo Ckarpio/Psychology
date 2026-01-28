@@ -8,13 +8,6 @@ function todayKey() {
 
 const CONTENT_TYPES = ['music', 'video', 'image', 'exercise', 'article'];
 
-const RESPONSE_KEYS = {
-  music: 'music',
-  video: 'video',
-  image: 'images',
-  exercise: 'exercises',
-  article: 'articles',
-};
 
 function pickForType(emotion, date, type) {
   // 1) Уже выбрано на этот день и тип?
@@ -58,7 +51,8 @@ function getDailyRecommendation(emotion) {
   for (const type of CONTENT_TYPES) {
     const item = pickForType(emotion, date, type);
     if (item) {
-      material[RESPONSE_KEYS[type]].push(item);
+      material[type].push(item);
+      //example material.music = material['music']
     }
   }
 

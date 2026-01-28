@@ -5,7 +5,6 @@ function getAllEmotions() {
   return db.prepare(`
     SELECT code,label,effect,color,ico,description
     FROM emotions
-    ORDER BY effect, label
   `).all();
 }
 
