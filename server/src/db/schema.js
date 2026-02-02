@@ -40,6 +40,4 @@ CREATE TABLE IF NOT EXISTS daily_picks (
   FOREIGN KEY (content_item_id) REFERENCES content_items(id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_picks_emotion_date_type
-ON daily_picks(emotion_code, pick_date, type);
 `;
