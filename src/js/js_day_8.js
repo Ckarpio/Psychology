@@ -1,20 +1,18 @@
 
-import { createElement } from "react";
-import { emotions } from "./const/emotion";
-import { emotionProperties } from "./const/emotion";
+import { emotions } from "./const/emotion.js";
 
-function createEmotionElement(emotion) {
+
+function createEmotionElement(emotions) {
    const emotionsBtn = document.createElement("button");
-   emotionsBtn.textContent = emotion.name;
+   emotionsBtn.textContent = emotions.label;
    emotionsBtn.className = "emotion-btn";
-   emotionsBtn.style.backgroundColor = emotion.color;
-   emotionsBtn.dataset.emotionId = emotion.id;
-   
+   emotionsBtn.style.backgroundColor = emotions.color;
+   emotionsBtn.effect=emotions.effect
    return emotionsBtn;
 }
 
 function renderAllEmotions(emotions) {
-    const emotionsContainer = document.getElementById("emotions-container");
+    const emotionsContainer = document.querySelector("emotion-btn");
 
     if (!emotionsContainer) {
         console.error('Container Not Found');
@@ -34,8 +32,9 @@ function renderAllEmotions(emotions) {
 }
 
 function main() {
-    
+    debugger
     renderAllEmotions(emotions);
+    createEmotionElement(emotions)
 }
 
 main();
