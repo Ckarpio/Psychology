@@ -43,12 +43,14 @@ body {
   font-size: 20px;
   color: #717182;
 }
+
+/* =========== КАК РАБОТАЕТ ПРИЛОЖЕНИЕ =========== */
 .page-container.work {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   padding: 20px;
-  border: 2px solid rgb(61, 60, 60);
+  border: 1px solid rgb(236, 234, 234);
 }
 
 .htw-header {
@@ -77,7 +79,6 @@ body {
 /* =================== ЭМОЦИИ =================== */
 .page-container.emo {
   padding: 0 0 20px;
-  
 }
 
 .emotoggle {
@@ -87,7 +88,6 @@ body {
   display: flex;
   background: #eaeaec;
   border-radius: 15px;
-  
 }
 
 button.toggle-btn {
@@ -96,12 +96,11 @@ button.toggle-btn {
   border: none;
   font-size: 16px;
   width: 50%;
-  height: 40px;
+  height: 30px;
   font-weight: 600;
   text-align: center;
   cursor: pointer;
   background: none;
-    border: 2px solid rgb(61, 60, 60);
 }
 
 .toggle-btn.positive-active {
@@ -187,13 +186,12 @@ button.emotion:hover {
 
 
 #selectBtnP.active {
-    background-color: #c683cd;
-
+    background-color: #dda2f9;
    
 }
 
 #selectBtnN.active {
-    background-color: #ee8ce1;
+    background-color: #dda2f9;
    
 }
 
@@ -212,31 +210,4 @@ button.emotion:hover {
     margin: 0 5px;
     transition: all 0.3s ease;
     color: #333;
-}
-
-
-body {
-    background: linear-gradient(45deg, 
-        #ffebee 0%, 
-        #fce4ec 25%, 
-        #f3e5f5 50%, 
-        #e8eaf6 75%, 
-        #e3f2fd 100%);
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
-    min-height: 100vh;
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-@keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-.wrapper {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
 }
