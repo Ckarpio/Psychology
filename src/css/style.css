@@ -43,14 +43,12 @@ body {
   font-size: 20px;
   color: #717182;
 }
-
-/* =========== КАК РАБОТАЕТ ПРИЛОЖЕНИЕ =========== */
 .page-container.work {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   padding: 20px;
-  border: 1px solid rgb(236, 234, 234);
+  border: 2px solid rgb(61, 60, 60);
 }
 
 .htw-header {
@@ -79,6 +77,7 @@ body {
 /* =================== ЭМОЦИИ =================== */
 .page-container.emo {
   padding: 0 0 20px;
+  
 }
 
 .emotoggle {
@@ -88,6 +87,7 @@ body {
   display: flex;
   background: #eaeaec;
   border-radius: 15px;
+  
 }
 
 button.toggle-btn {
@@ -96,11 +96,12 @@ button.toggle-btn {
   border: none;
   font-size: 16px;
   width: 50%;
-  height: 30px;
+  height: 40px;
   font-weight: 600;
   text-align: center;
   cursor: pointer;
   background: none;
+    border: 2px solid rgb(61, 60, 60);
 }
 
 .toggle-btn.positive-active {
@@ -186,13 +187,13 @@ button.emotion:hover {
 
 
 #selectBtnP.active {
-    background-color: #00bd03;
+    background-color: #c683cd;
 
    
 }
 
 #selectBtnN.active {
-    background-color: #e05656;
+    background-color: #ee8ce1;
    
 }
 
