@@ -50,7 +50,7 @@ body {
   flex-direction: column;
   align-items: flex-start;
   padding: 20px;
-  border: 1px solid rgb(236, 234, 234);
+  border: 1px solid rgb(0, 0, 0);
 }
 
 .htw-header {
@@ -84,7 +84,7 @@ body {
 .emotoggle {
   width: 100%;
   padding: 2px;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   display: flex;
   background: #eaeaec;
   border-radius: 15px;
@@ -96,7 +96,7 @@ button.toggle-btn {
   border: none;
   font-size: 16px;
   width: 50%;
-  height: 30px;
+  height: 35px;
   font-weight: 600;
   text-align: center;
   cursor: pointer;
@@ -162,7 +162,7 @@ button.emotion:hover {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 20px;
+  padding: 25px;
   color: #717182;
   text-align: center;
 }
@@ -186,12 +186,12 @@ button.emotion:hover {
 
 
 #selectBtnP.active {
-    background-color: #dda2f9;
+    background-color: #ffffff;
    
 }
 
 #selectBtnN.active {
-    background-color: #dda2f9;
+    background-color: #ffffff;
    
 }
 
@@ -211,3 +211,4 @@ button.emotion:hover {
     transition: all 0.3s ease;
     color: #333;
 }
+
