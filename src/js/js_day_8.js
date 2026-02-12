@@ -142,10 +142,9 @@ function createEmotionElement(emotionData) {
    
   
    emotionsBtn.addEventListener('click', function() {
-       selectEmotion(emotionData);
        
     
-       window.location.href = "secon_index.html";
+       window.location.href = "secon_index.html?emotion=${emothionCode}";
        
    
    });
