@@ -43,25 +43,14 @@ function displayEmotionInfo(emotionData, emotionProps) {
     
     if (emotionProps && emotionProps.description) {
         descriptionElement.textContent = emotionProps.description;
-    } else {
-        descriptionElement.textContent = getDefaultDescription(emotionData);
     }
     
     addAdditionalInfo(emotionData, emotionProps);
 }
 
-function getDefaultDescription(emotionData) {
-    const effect = emotionData.effect === 'positive' ? 'положительная' : 'отрицательная';
-    return `Это ${effect} эмоция. Здесь вы найдете подборку материалов, соответствующих этому состоянию.`;
-}
 
-function applyEmotionStyles(emotionData) {
-    const emotionColor = emotionData.color || '#f0f0f0';
-    
-    const titleElement = document.querySelector('h1');
-    if (titleElement) {
-        titleElement.style.color = emotionColor;
-    }
+
+
     
     const infoBox = document.querySelector('.info-box');
     if (infoBox) {
@@ -70,7 +59,7 @@ function applyEmotionStyles(emotionData) {
     }
     
     document.body.classList.add(`emotion-${emotionData.effect}`);
-}
+
 
 function addAdditionalInfo(emotionData, emotionProps) {
     let additionalInfoContainer = document.querySelector('.additional-emotion-info');
@@ -114,15 +103,6 @@ function addAdditionalInfo(emotionData, emotionProps) {
     additionalInfoContainer.innerHTML = additionalHtml;
 }
 
-function displayError(message) {
-    const titleElement = document.querySelector('h1');
-    const descriptionElement = document.querySelector('.info-box p');
     
-    if (titleElement) {
-        titleElement.textContent = 'Ошибка';
-    }
     
-    if (descriptionElement) {
-        descriptionElement.textContent = message || 'Не удалось загрузить информацию об эмоции';
-    }
-}
+
