@@ -1,7 +1,8 @@
-import { emotion } from "./const/emotion.js";
-import { emotionsProperties } from "./const/emotionProperties.js";
 
-document.addEventListener('DOMContentLoaded', function() {
+
+const API_URL = 'http://localhost:3000';
+
+document.addEventListener('DOMContentLoaded', async function() {
     const params = new URLSearchParams(window.location.search);
     const emotionCode = params.get('emotion');
     
@@ -10,31 +11,48 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    loadEmotionData(emotionCode);
-    initTabs();
-});
-
-function loadEmotionData(emotionCode) {
     try {
-        const emotionData = emotion.find(em => em.code === emotionCode);
+
+        const emotionsResponse = await fetch(`${API_URL}/api/emotions`);
+        
+        if (!emotionsResponse.ok) {
+            throw new Error('Ошибка загрузки списка эмоций');
+        }
+        
+        const emotions = await emotionsResponse.json();
+        const emotionData = emotions.find(em => em.code === emotionCode);
         
         if (!emotionData) {
             displayError('Эмоция не найдена');
             return;
         }
+
+        displayEmotionInfo(emotionData);
+
+        try {
+            const recommendationResponse = await fetch(`${API_URL}/api/recommendation?emotion=${emotionCode}`);
+            
+            if (recommendationResponse.ok) {
+                const recommendationData = await recommendationResponse.json();
+                window.currentEmotionMaterials = recommendationData.material || {};
+            } else {
+                window.currentEmotionMaterials = {};
+            }
+        } catch (e) {
+            console.log('Рекомендации временно недоступны');
+            window.currentEmotionMaterials = {};
+        }
         
-        const emotionProps = emotionsProperties.find(prop => prop.code === emotionCode);
-        
-        displayEmotionInfo(emotionData, emotionProps);
-        
-        window.currentEmotionMaterials = emotionProps?.material || null;
+    
+        initTabs();
         
     } catch (error) {
-        displayError('Ошибка загрузки данных');
+        console.error('Ошибка:', error);
+        displayError('Ошибка загрузки данных с сервера');
     }
-}
+});
 
-function displayEmotionInfo(emotionData, emotionProps) {
+function displayEmotionInfo(emotionData) {
     const titleElement = document.querySelector('h1');
     const descriptionElement = document.querySelector('.info-box p');
     
@@ -42,14 +60,9 @@ function displayEmotionInfo(emotionData, emotionProps) {
         return;
     }
     
-    titleElement.textContent = emotionData.label || 'Эмоция';
-    
-    if (emotionProps && emotionProps.material && emotionProps.material.description) {
-        descriptionElement.textContent = emotionProps.material.description;
-    } else {
-        descriptionElement.textContent = 'Описание отсутствует';
-    }
-    
+    titleElement.textContent = emotionData.label;
+    descriptionElement.textContent = emotionData.description;
+   
     const infoBox = document.querySelector('.info-box');
     if (infoBox && emotionData.color) {
         infoBox.style.borderLeftColor = emotionData.color;
@@ -60,10 +73,10 @@ function displayEmotionInfo(emotionData, emotionProps) {
         document.body.classList.add(`emotion-${emotionData.effect}`);
     }
     
-    addAdditionalInfo(emotionData, emotionProps);
+    addAdditionalInfo(emotionData);
 }
 
-function addAdditionalInfo(emotionData, emotionProps) {
+function addAdditionalInfo(emotionData) {
     let additionalInfoContainer = document.querySelector('.additional-emotion-info');
     
     if (!additionalInfoContainer) {
@@ -78,25 +91,8 @@ function addAdditionalInfo(emotionData, emotionProps) {
     
     let additionalHtml = '';
     
-    if (emotionProps && emotionProps.material) {
-        const materialCounts = [];
-        
-        if (emotionProps.material.music && emotionProps.material.music.length > 0) {
-            materialCounts.push(`🎵 Музыка: ${emotionProps.material.music.length}`);
-        }
-        if (emotionProps.material.video && emotionProps.material.video.length > 0) {
-            materialCounts.push(`🎬 Видео: ${emotionProps.material.video.length}`);
-        }
-        if (emotionProps.material.exersice && emotionProps.material.exersice.length > 0) {
-            materialCounts.push(`📖 Упражнения: ${emotionProps.material.exersice.length}`);
-        }
-        if (emotionProps.material.articles && emotionProps.material.articles.length > 0) {
-            materialCounts.push(`📄 Статьи: ${emotionProps.material.articles.length}`);
-        }
-        
-        if (materialCounts.length > 0) {
-            additionalHtml += `<p><strong>Доступные материалы:</strong> ${materialCounts.join(' | ')}</p>`;
-        }
+    if (emotionData.color) {
+        additionalHtml += `<p><strong>Тип:</strong> ${emotionData.effect === 'positive' ? 'Позитивная' : 'Негативная'}</p>`;
     }
     
     additionalInfoContainer.innerHTML = additionalHtml;
@@ -122,7 +118,6 @@ function initTabs() {
     tabs.forEach(tab => {
         tab.addEventListener('click', function() {
             tabs.forEach(t => t.classList.remove('active'));
-            
             this.classList.add('active');
             
             const tabId = this.getAttribute('data-tab');
@@ -154,11 +149,11 @@ function showTabContent(tabId, container) {
             break;
         case 'images':
             title = 'Картинки';
-            items = materials.images || materials.pictures || [];
+            items = materials.images || [];
             break;
         case 'exercises':
             title = 'Упражнения';
-            items = materials.exersice || [];
+            items = materials.exercises || [];
             break;
         case 'articles':
             title = 'Статьи';
@@ -169,15 +164,26 @@ function showTabContent(tabId, container) {
     let html = `<h2>${title}</h2>`;
     
     if (items && items.length > 0) {
-        html += '<ul class="tab-content-list">';
+        html += '<ul>';
         items.forEach(item => {
-            if (typeof item === 'string') {
-                html += `<li>${item}</li>`;
-            } else if (item.title) {
-                html += `<li><strong>${item.title}</strong>${item.description ? ': ' + item.description : ''}</li>`;
+            html += '<li style="margin-bottom: 15px; padding: 10px; border-bottom: 1px solid #eee;">';
+            if (item.title) {
+                html += `<strong>${item.title}</strong><br>`;
             }
+            if (item.subtitle) {
+                html += `<small style="color: #666;">${item.subtitle}</small><br>`;
+            }
+            if (item.body) {
+                html += `<p style="margin: 5px 0;">${item.body}</p>`;
+            }
+            if (item.url) {
+                html += `<a href="${item.url}" target="_blank" style="color: #4CAF50; text-decoration: none;">Перейти к материалу →</a>`;
+            }
+            html += '</li>';
         });
         html += '</ul>';
+    } else {
+        html += '<p>Нет доступных материалов</p>';
     }
     
     container.innerHTML = html;
@@ -193,5 +199,10 @@ function displayError(message) {
     
     if (descriptionElement) {
         descriptionElement.textContent = message;
+    }
+    
+    const tabs = document.querySelector('.tabs');
+    if (tabs) {
+        tabs.style.display = 'none';
     }
 }
