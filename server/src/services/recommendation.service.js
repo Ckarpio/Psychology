@@ -6,7 +6,7 @@ function todayKey() {
   return new Intl.DateTimeFormat('en-CA').format(new Date());
 }
 
-const CONTENT_TYPES = ['music', 'video', 'image', 'exercise', 'article'];
+const CONTENT_TYPES = ['music', 'video', 'images', 'exercises', 'articles'];
 
 
 function pickForType(emotion, date, type) {
