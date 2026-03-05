@@ -1,8 +1,8 @@
 
+import { API_URL } from "./const/const.js";
 import { emotion } from "./const/emotion.js";
 import{emotionsProperties} from "./const/emotionProperties.js"
 
-const API_URL = 'http://localhost:3000';
 let allEmotions = [];
 
 async function loadEmotionsFromServer() {

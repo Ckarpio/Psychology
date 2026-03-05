@@ -1,6 +1,5 @@
 
-
-const API_URL = 'http://localhost:3000';
+import { API_URL } from "./const/const.js";
 
 document.addEventListener('DOMContentLoaded', async function() {
     const params = new URLSearchParams(window.location.search);
