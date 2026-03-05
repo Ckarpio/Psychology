@@ -1,7 +1,6 @@
 
 import { API_URL } from "./const/const.js";
 import { emotion } from "./const/emotion.js";
-import{emotionsProperties} from "./const/emotionProperties.js"
 
 let allEmotions = [];
 
@@ -42,27 +41,7 @@ function createEmotionElement(emotionData) {
    }
    
    emotionsBtn.addEventListener('click', function() {
-
-        fetch(`${API_URL}/api/emotions/${emotionData.code}/materials`)
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                }
-                throw new Error('Сервер недоступен');
-            })
-            .then(properties => {
-                localStorage.setItem(emotionData.code, JSON.stringify(properties));
-                window.location.href = `second_index?emotion=${emotionData.code}`;
-            })
-            .catch(error => {
-                console.log('Используем локальные данные');
-                const properties = emotionsProperties.find((settings) => settings.code === emotionData.code);
-                if(properties) {
-                    localStorage.setItem(emotionData.code, JSON.stringify(properties));
-                }
-                window.location.href = `second_index?emotion=${emotionData.code}`;
-            });
-     
+       window.location.href = `second_index?emotion=${emotionData.code}`;
    });
     
    return emotionsBtn;
