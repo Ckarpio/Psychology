@@ -1,0 +1,126 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  background: linear-gradient(to bottom, #f6f6fb 0%, #f2f1fc 100%);
+  color: #222044;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 30px auto;
+  padding: 24px 32px 32px;
+}
+
+h1 {
+  font-size: 2.6rem;
+  font-weight: 500;
+  margin-bottom: 18px;
+  letter-spacing: 1px;
+}
+
+.info-box {
+  background: #f5f8fc;
+  border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(141, 144, 197, 0.06);
+  padding: 23px 30px;
+  margin-bottom: 32px;
+  font-size: 1.17rem;
+  color: #48486a;
+}
+
+.tabs {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 34px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  background: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 11px 26px 11px 20px;
+  font-size: 1.08rem;
+  color: #7b6ae0;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(141, 144, 197, 0.09);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: box-shadow .2s, color .2s, background .2s;
+  position: relative;
+}
+
+.tab.active {
+  background: linear-gradient(90deg, #8a5fff 0%, #ab6fff 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(93, 57, 225, 0.15);
+  font-weight: 600;
+  z-index: 2;
+}
+
+.tab .tab-icon {
+  font-size: 1.18em;
+  margin-right: 7px;
+}
+
+.tab-content {
+  margin-top: 20px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(141, 144, 197, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 380px;
+  min-height: 220px;
+  margin-bottom: 34px;
+}
+
+.card-image {
+  min-height: 130px;
+  background: linear-gradient(135deg, #cab7fa 0%, #e9eafc 100%);
+  border-radius: 18px 18px 0 0;
+}
+
+.card-desc {
+  padding: 19px 20px 17px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card .title {
+  font-weight: 600;
+  font-size: 1.17rem;
+  color: #48486a;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+}
+
+.card .subtitle {
+  color: #9092b5;
+  font-size: 1.01rem;
+  margin-bottom: 9px;
+}
+
+.card .meta {
+  color: #7a7aad;
+  font-size: 0.97rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b0b1cb;
+  font-size: 1.09rem;
+  min-height: 110px;
+}

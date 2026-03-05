@@ -8,6 +8,7 @@ body {
   margin: 0;
   font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    
 }
 
 /* Внешняя обёртка*/
@@ -49,7 +50,7 @@ body {
   flex-direction: column;
   align-items: flex-start;
   padding: 20px;
-  border: 1px solid rgb(236, 234, 234);
+  border: 1px solid rgb(0, 0, 0);
 }
 
 .htw-header {
@@ -83,7 +84,7 @@ body {
 .emotoggle {
   width: 100%;
   padding: 2px;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   display: flex;
   background: #eaeaec;
   border-radius: 15px;
@@ -95,17 +96,21 @@ button.toggle-btn {
   border: none;
   font-size: 16px;
   width: 50%;
-  height: 30px;
+  height: 35px;
   font-weight: 600;
   text-align: center;
   cursor: pointer;
   background: none;
 }
 
-button.toggle-btn-active {
-  background-color: #ffffff;
+.toggle-btn.positive-active {
+    background-color: #ffffff;
 }
 
+.toggle-btn.negative-active {
+    background-color: #ffffff;
+
+}
 .grid {
   width: 100%;
   display: grid;
@@ -157,7 +162,7 @@ button.emotion:hover {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 20px;
+  padding: 25px;
   color: #717182;
   text-align: center;
 }
@@ -169,3 +174,41 @@ button.emotion:hover {
 .footer-text-two {
       font-size: 12px;
 }
+
+
+.toggle-btn.active {
+    background-color: #4776E6;
+    color: rgb(0, 0, 0);
+    font-weight: bold;
+    transform: translateY(-2px);
+   
+}
+
+
+#selectBtnP.active {
+    background-color: #ffffff;
+   
+}
+
+#selectBtnN.active {
+    background-color: #ffffff;
+   
+}
+
+.toggle-btn:hover {
+    transform: translateY(-1px);
+   
+}
+
+.toggle-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 0 5px;
+    transition: all 0.3s ease;
+    color: #333;
+}
+
