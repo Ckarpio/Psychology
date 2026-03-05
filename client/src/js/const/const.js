@@ -1,1 +1,1 @@
-export const API_URL = 'https://psychology-1hac.onrender.com/';
+export const API_URL = 'https://psychology-1hac.onrender.com';
