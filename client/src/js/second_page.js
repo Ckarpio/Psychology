@@ -331,20 +331,110 @@ function showTabContent(tabId, container) {
     let html = '';
     
     if (items && items.length > 0) {
-        items.forEach(item => {
+        items.forEach((item, index) => {
+            html += `<div class="material-card" data-type="${tabId}">`;
+            
+            // Заголовок и описание (как на скриншоте)
             html += `
-                <div class="material-card">
-                    <div class="material-title">${item.title || 'Без названия'}</div>
-                    <div class="material-subtitle">${item.subtitle || ''}</div>
-                    <div class="material-meta">${item.duration || ''}</div>
-                </div>
+                <div class="material-title">${item.title || 'Без названия'}</div>
+                <div class="material-subtitle">${item.subtitle || ''}</div>
             `;
+            
+            // Добавляем медиа-плеер в зависимости от типа
+            if (tabId === 'music' && item.audioUrl) {
+                html += `
+                    <div class="media-player audio-player">
+                        <audio controls class="audio-control">
+                            <source src="${item.audioUrl}" type="audio/mpeg">
+                            Ваш браузер не поддерживает аудио элемент.
+                        </audio>
+                    </div>
+                `;
+            } 
+            else if (tabId === 'video' && item.videoUrl) {
+                html += `
+                    <div class="media-player video-player">
+                        <video controls poster="${item.thumbnail || ''}">
+                            <source src="${item.videoUrl}" type="video/mp4">
+                            Ваш браузер не поддерживает видео элемент.
+                        </video>
+                    </div>
+                `;
+            }
+            else if (tabId === 'images' && item.imageUrl) {
+                html += `
+                    <div class="media-player image-player">
+                        <img src="${item.imageUrl}" 
+                             alt="${item.title || 'Изображение'}" 
+                             class="media-image" 
+                             onclick="openImageModal('${item.imageUrl}', '${item.title || ''}')"
+                             loading="lazy">
+                    </div>
+                `;
+            }
+            
+            // Длительность (как на скриншоте)
+            if (item.duration) {
+                html += `<div class="material-meta">${item.duration}</div>`;
+            }
+            
+            html += `</div>`;
         });
     } else {
         html = '<div class="no-materials">Нет доступных материалов</div>';
     }
     
     container.innerHTML = html;
+    
+    // Добавляем обработчики для видео
+    const videos = container.querySelectorAll('video');
+    videos.forEach(video => {
+        video.addEventListener('play', function() {
+            videos.forEach(v => {
+                if (v !== video && !v.paused) {
+                    v.pause();
+                }
+            });
+        });
+    });
+}
+
+// Функция для открытия изображения в модальном окне
+window.openImageModal = function(imageUrl, title) {
+    const existingModal = document.querySelector('.image-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'image-modal';
+    modal.innerHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                ${title ? `<h3 class="modal-title">${title}</h3>` : ''}
+                <img src="${imageUrl}" alt="${title || 'Изображение'}">
+            </div>
+        </div>
+    `;
+    
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal || e.target.classList.contains('close-modal') || e.target.classList.contains('modal-overlay')) {
+            document.body.removeChild(modal);
+            document.body.style.overflow = '';
+        }
+    });
+    
+    document.addEventListener('keydown', function escHandler(e) {
+        if (e.key === 'Escape' && document.querySelector('.image-modal')) {
+            document.body.removeChild(modal);
+            document.body.style.overflow = '';
+            document.removeEventListener('keydown', escHandler);
+        }
+    });
+    
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
 }
 
 function displayError(message) {
