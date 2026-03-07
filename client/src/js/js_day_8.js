@@ -1,8 +1,8 @@
 
 import { emotion } from "./const/emotion.js";
 import{emotionsProperties} from "./const/emotionProperties.js"
+import { API_URL } from "./second_emotion_display.js";
 
-const API_URL = 'http://localhost:3000';
 let allEmotions = [];
 
 async function loadEmotionsFromServer() {

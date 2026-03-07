@@ -1,1 +1,0 @@
-export const API_URL = "https://psychology-35o7.onrender.com"
