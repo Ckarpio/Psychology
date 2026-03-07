@@ -3,7 +3,8 @@
 <head>
     <title>Психологическое приложение</title>
     <link rel="stylesheet" href="./src/css/style.css"> 
-    <link rel="stylesheet" href="./src/css/colors.css"> 
+    <link rel="stylesheet" href="./src/css/colors.css">
+    <script src="./src/js/first_page.js" type="module"></script>
 </head>
 <body>
   <div class="wrapper">
@@ -11,7 +12,6 @@
       <span class="header-p1">Привет</span>
       <span class="header-p2">Как ты себя чувствуешь сегодня?</span>
     </div>
-
     <div class="page-container work">
       <span class="htw-header">Как работает приложение</span>
       <ul class="htw-ul">
@@ -23,19 +23,12 @@
 
     <div class="page-container emo">
       <div class="emotoggle">
-        <button class="toggle-btn toggle-btn-active" data-tab="negative">Негативные эмоции</button>
-        <button class="toggle-btn" data-tab="positive">Позитивные эмоции</button>
+        <button class="toggle-btn", id="selectBtnN" data-tab="negative">Негативные эмоции</button>
+        <button class="toggle-btn",  id="selectBtnP" data-tab="positive">Позитивные эмоции</button>
       </div>
 
-      <div class="grid">
-        <button class="emotion emo-apathy">Апатия</button>
-        <button class="emotion emo-anger">Гнев</button>
-        <button class="emotion emo-sadness">Грусть</button>
-        <button class="emotion emo-loneliness">Одиночество</button>
-        <button class="emotion emo-panic">Паника</button>
-        <button class="emotion emo-fear">Страх</button>
-        <button class="emotion emo-stress">Стресс</button>
-        <button class="emotion emo-anxiety">Тревога</button>
+      <div class="grid", id="emoCont">
+    
       </div>
     </div>
 
