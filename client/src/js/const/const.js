@@ -1,1 +1,1 @@
-export const API_URL = 'https://psychology-1-izxm.onrender.com';
+export const API_URL = 'https://psychology-5rnx.onrender.com';
