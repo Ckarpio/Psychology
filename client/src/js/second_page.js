@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 /**
  *
- * @param {string} emotionCode 
+ * @param {string} emotionCode -
  */
 async function loadRecommendations(emotionCode) {
     try {

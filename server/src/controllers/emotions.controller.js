@@ -1,3 +1,4 @@
+
 const emotionsRepo = require('../repositories/emotions.repo');
 
 async function getAllEmotions(req, res) {
@@ -5,4 +6,6 @@ async function getAllEmotions(req, res) {
   res.json(dbResult);
 }
 
-module.exports = { getAllEmotions };
+console.log('getAllEmotions type:', typeof getAllEmotions); 
+
+module.exports = { getAllEmotions }; 
