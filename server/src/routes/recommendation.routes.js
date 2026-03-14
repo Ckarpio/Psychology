@@ -4,3 +4,5 @@ const { getRecommendation } = require('../controllers/recommendation.controller'
 router.get('/', getRecommendation);
 
 module.exports = { getRecommendation };
+
+module.exports = router; 
