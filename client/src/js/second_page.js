@@ -1,7 +1,5 @@
 
 
-//
-
 import { API_URL } from "./const/const.js";
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -42,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 /**
  *
- * @param {string} emotionCode -
+ * @param {string} emotionCode 
  */
 async function loadRecommendations(emotionCode) {
     try {

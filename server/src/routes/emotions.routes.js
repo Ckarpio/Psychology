@@ -4,3 +4,4 @@ const { getAllEmotions } = require('../controllers/emotions.controller');
 router.get('/', getAllEmotions);
 
 module.exports = router;
+
