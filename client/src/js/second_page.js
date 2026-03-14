@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     try {
-        // Загружаем информацию об эмоции
         const emotionsResponse = await fetch(`${API_URL}/api/emotions`);
         
         if (!emotionsResponse.ok) {
