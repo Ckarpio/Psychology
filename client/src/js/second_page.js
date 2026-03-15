@@ -100,21 +100,30 @@ function addBackButton() {
 async function loadImage(imageUrl) {
     if (!imageUrl) return null;
     
+    console.log('Попытка загрузить изображение:', imageUrl);
+    
     try {
         // Если это уже полный URL, возвращаем как есть
         if (imageUrl.startsWith('http')) {
-            return imageUrl;
+            // Проверяем, доступно ли изображение
+            const response = await fetch(imageUrl, { method: 'HEAD' }).catch(() => null);
+            if (response && response.ok) {
+                return imageUrl;
+            } else {
+                console.warn('Изображение не доступно по URL:', imageUrl);
+                return null;
+            }
         }
         
         // Если это относительный путь, добавляем базовый URL
         const fullUrl = `${API_URL}${imageUrl}`;
         
         // Проверяем, доступно ли изображение
-        const response = await fetch(fullUrl, { method: 'HEAD' });
-        if (response.ok) {
+        const response = await fetch(fullUrl, { method: 'HEAD' }).catch(() => null);
+        if (response && response.ok) {
             return fullUrl;
         } else {
-            console.warn('Изображение не найдено:', fullUrl);
+            console.warn('Изображение не найдено на сервере:', fullUrl);
             return null;
         }
     } catch (error) {
@@ -134,8 +143,11 @@ async function preloadImages(items) {
     const loadedItems = [];
     
     for (const item of items) {
-        const imageUrl = item.url || item.src || item.path || item.image_url || item.imageUrl;
+        // Ищем URL в поле "изображения" (русское название)
+        const imageUrl = item.изображения || item.url || item.src || item.path || item.image_url || item.imageUrl;
+        
         if (imageUrl) {
+            console.log('Найдено изображение в поле:', imageUrl);
             const loadedUrl = await loadImage(imageUrl);
             if (loadedUrl) {
                 loadedItems.push({
@@ -143,6 +155,8 @@ async function preloadImages(items) {
                     loadedUrl: loadedUrl,
                     originalUrl: imageUrl
                 });
+            } else {
+                console.warn('Не удалось загрузить изображение:', imageUrl);
             }
         }
     }
@@ -171,7 +185,7 @@ function parseVKUrl(url) {
     
     // Пытаемся извлечь информацию из разных паттернов VK ссылок
     
-    // Паттерн: audio-20012345_12345678 (старый формат)
+    // Паттерн: audio-20012345_12345678
     const audioMatch = url.match(/audio(-?\d+_\d+)/);
     if (audioMatch) {
         trackInfo.title = 'Аудиозапись VK';
@@ -282,23 +296,16 @@ function getVKLinkInfo(url) {
 
 /**
  * Функция для получения embed URL Rutube
- * @param {string} url - оригинальная ссылка на видео Rutube
- * @returns {Object|null} информация для встраивания
  */
 function getRutubeEmbedUrl(url) {
     if (!url || !url.includes('rutube.ru')) return null;
     
     console.log('Обрабатываем ссылку Rutube:', url);
     
-    // Паттерны для разных форматов ссылок Rutube
     const patterns = [
-        // rutube.ru/video/8c350a831242aea13307af9ce3175aba/
         { regex: /video\/([a-zA-Z0-9]+)/, type: 'video' },
-        // rutube.ru/play/embed/8c350a831242aea13307af9ce3175aba
         { regex: /embed\/([a-zA-Z0-9]+)/, type: 'embed' },
-        // rutube.ru/?v=8c350a831242aea13307af9ce3175aba
         { regex: /[?&]v=([a-zA-Z0-9]+)/, type: 'param' },
-        // rutube.ru/8c350a831242aea13307af9ce3175aba
         { regex: /\/([a-zA-Z0-9]{32,})/, type: 'direct' }
     ];
     
@@ -319,7 +326,6 @@ function getRutubeEmbedUrl(url) {
         }
     }
     
-    // Если не нашли по паттернам, но это Rutube
     if (url.includes('rutube.ru')) {
         console.warn('Не удалось извлечь ID из ссылки Rutube:', url);
         return {
@@ -392,18 +398,20 @@ function detectMaterialsStructure(data) {
                 }
             } else {
                 // Определяем по URL
-                if (item.url) {
-                    if (item.url.includes('rutube.ru')) {
+                if (item.url || item.изображения) {
+                    const url = item.url || item.изображения;
+                    
+                    if (url.includes('rutube.ru')) {
                         structured.video.push(item);
-                    } else if (item.url.includes('vk.com') || item.url.includes('vk.ru')) {
-                        if (item.url.includes('video')) {
+                    } else if (url.includes('vk.com') || url.includes('vk.ru')) {
+                        if (url.includes('video')) {
                             structured.video.push(item);
                         } else {
                             structured.music.push(item);
                         }
-                    } else if (item.url.match(/\.(mp3|wav|ogg)$/i)) {
+                    } else if (url.match(/\.(mp3|wav|ogg)$/i)) {
                         structured.music.push(item);
-                    } else if (item.url.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)) {
+                    } else if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)) {
                         structured.images.push(item);
                     } else {
                         structured.articles.push(item);
@@ -521,6 +529,8 @@ async function showTabContent(tabId, container) {
     const dataField = tabMapping[tabId];
     items = materials[dataField] || [];
     
+    console.log(`Рендерим вкладку ${tabId}, элементов:`, items.length);
+    
     let html = `<h2 style="margin-top: 0; color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">${getIconForTab(tabId)} ${getTitleForTab(tabId)}</h2>`;
     
     if (items && items.length > 0) {
@@ -572,13 +582,17 @@ async function renderTabContent(tabId, items) {
 }
 
 /**
- * Рендеринг фотографий с поддержкой загрузки
+ * Рендеринг фотографий с поддержкой поля "изображения"
  */
 async function renderImages(items) {
     let html = '<div class="images-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; padding: 20px 0;">';
     
+    console.log('Загружаем изображения из БД:', items);
+    
     // Предзагружаем изображения
     const loadedItems = await preloadImages(items);
+    
+    console.log('Загруженные изображения:', loadedItems);
     
     if (loadedItems.length === 0) {
         return '<div class="empty-gallery" style="padding: 80px 20px; text-align: center; background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%); border-radius: 24px; color: #999;"><p style="font-size: 64px; margin: 0 0 20px 0; opacity: 0.5;">🖼️</p><p style="font-size: 18px; color: #666;">Нет доступных фотографий</p></div>';
@@ -586,9 +600,9 @@ async function renderImages(items) {
     
     for (const item of loadedItems) {
         const imageUrl = item.loadedUrl;
-        const title = item.title || item.name || 'Фотография';
-        const description = item.description || '';
-        const author = item.author || item.photographer || '';
+        const title = item.title || item.name || item.название || 'Фотография';
+        const description = item.description || item.описание || '';
+        const author = item.author || item.photographer || item.автор || '';
         
         html += `
             <div class="image-item" style="background: white; border: 1px solid #e0e0e0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer;" 
@@ -601,8 +615,8 @@ async function renderImages(items) {
                     <img src="${imageUrl}" 
                          alt="${title}" 
                          style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;"
-                         onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f0f0f0;color:#999;\'><span style=\'font-size:48px;\'>🖼️</span><br>Ошибка загрузки</div>';"
-                         onload="this.style.opacity='1';">
+                         onerror="this.onerror=null; 
+                                  this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f0f0f0;color:#999;\'><span style=\'font-size:48px;\'>🖼️</span><span style=\'margin-top:10px;\'>Фото не доступно</span></div>';">
                 </div>
                 
                 <!-- Информация о фотографии -->
@@ -611,13 +625,9 @@ async function renderImages(items) {
                     ${author ? `<div style="margin: 0 0 8px 0; color: #666; font-size: 14px;">📷 ${author}</div>` : ''}
                     ${description ? `<p style="margin: 0 0 12px 0; color: #666; font-size: 14px; line-height: 1.5;">${description}</p>` : ''}
                     
-                    <div style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div style="margin-top: 12px;">
                         <span style="background: #4CAF5020; color: #4CAF50; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
                             🖼️ Фотография
-                        </span>
-                        <span style="color: #999; font-size: 12px; display: flex; align-items: center; gap: 4px;">
-                            <span>📏</span> 
-                            ${item.width ? item.width + 'px' : 'Оригинальный размер'}
                         </span>
                     </div>
                 </div>
