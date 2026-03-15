@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     try {
-        // Загружаем информацию об эмоции
         const emotionsResponse = await fetch(`${API_URL}/api/emotions`);
         
         if (!emotionsResponse.ok) {
@@ -29,10 +28,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
 
         displayEmotionInfo(emotionData);
-
-        // Загружаем рекомендации из базы данных
         await loadRecommendationsFromDB(emotionCode);
-
         initTabs();
         
     } catch (error) {
@@ -42,127 +38,94 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 /**
- * Определение типа музыкального сервиса по URL
- * @param {string} url - URL трека
- * @returns {Object} информация о сервисе
+ * Функция для VK Музыки - извлекает информацию из разных форматов ссылок
  */
-function detectMusicService(url) {
-    if (!url) return { type: 'unknown', name: 'внешнем сервисе' };
+function extractVKMusicInfo(url) {
+    if (!url) return null;
     
-    if (url.includes('music.yandex') || url.includes('yandex.ru/music')) {
-        return { 
-            type: 'yandex', 
-            name: 'Яндекс.Музыке',
-            color: '#FC0A0A',
-            icon: '🎵'
-        };
-    } else if (url.includes('spotify')) {
-        return { 
-            type: 'spotify', 
-            name: 'Spotify',
-            color: '#1DB954',
-            icon: '🎵'
-        };
-    } else if (url.includes('youtube') || url.includes('youtu.be')) {
-        return { 
-            type: 'youtube', 
-            name: 'YouTube',
-            color: '#FF0000',
-            icon: '▶️'
-        };
-    } else if (url.includes('apple.music') || url.includes('music.apple')) {
-        return { 
-            type: 'apple', 
-            name: 'Apple Music',
-            color: '#FA243C',
-            icon: '🎵'
-        };
-    } else if (url.includes('vk.com') || url.includes('vk.ru')) {
-        return { 
-            type: 'vk', 
-            name: 'VK Музыке',
-            color: '#0077FF',
-            icon: '🎵'
-        };
-    } else if (url.includes('soundcloud')) {
-        return { 
-            type: 'soundcloud', 
-            name: 'SoundCloud',
-            color: '#FF5500',
-            icon: '🎵'
-        };
-    } else if (url.match(/\.(mp3|wav|ogg|m4a)$/i)) {
-        return { 
-            type: 'local', 
-            name: 'локальном файле',
-            color: '#4CAF50',
-            icon: '🎵'
+    console.log('Обрабатываем ссылку VK Музыки:', url);
+    
+    // Проверяем, что это ссылка VK
+    if (!url.includes('vk.com') && !url.includes('vk.ru')) {
+        return null;
+    }
+    
+    // Паттерны для разных типов ссылок VK
+    const patterns = [
+        // audio-20012345_12345678
+        { regex: /audio(-?\d+_\d+)/, type: 'audio' },
+        // album/-20012345_12345678
+        { regex: /album(-?\d+_\d+)/, type: 'album' },
+        // playlist/-20012345_12345678
+        { regex: /playlist(-?\d+_\d+)/, type: 'playlist' },
+        // audio?q=название
+        { regex: /audio\?q=([^&]+)/, type: 'search' },
+        // music?section=playlists
+        { regex: /music\?section=([^&]+)/, type: 'section' }
+    ];
+    
+    for (const pattern of patterns) {
+        const match = url.match(pattern.regex);
+        if (match) {
+            console.log('Найдено совпадение в VK:', pattern.type, match);
+            
+            switch(pattern.type) {
+                case 'audio':
+                    return {
+                        type: 'track',
+                        id: match[1],
+                        embedUrl: null, // VK не дает embed для отдельных треков
+                        directUrl: url,
+                        isTrack: true
+                    };
+                case 'album':
+                    return {
+                        type: 'album',
+                        id: match[1],
+                        embedUrl: `https://vk.com/music/album/${match[1]}`,
+                        directUrl: url
+                    };
+                case 'playlist':
+                    return {
+                        type: 'playlist',
+                        id: match[1],
+                        embedUrl: `https://vk.com/music/playlist/${match[1]}`,
+                        directUrl: url
+                    };
+                default:
+                    return {
+                        type: pattern.type,
+                        id: match[1],
+                        embedUrl: null,
+                        directUrl: url
+                    };
+            }
+        }
+    }
+    
+    // Если это страница музыки VK
+    if (url.includes('vk.com/music')) {
+        return {
+            type: 'music_page',
+            id: null,
+            embedUrl: null,
+            directUrl: url
         };
     }
     
-    return { 
-        type: 'external', 
-        name: 'внешнем сервисе',
-        color: '#666',
-        icon: '🔗'
+    return {
+        type: 'unknown',
+        id: null,
+        embedUrl: null,
+        directUrl: url
     };
 }
 
 /**
- * Получение embed URL для Яндекс.Музыки
- * @param {string} url - оригинальная ссылка
- * @returns {string|null} embed ссылка
- */
-function getYandexMusicEmbedUrl(url) {
-    // Пример: https://music.yandex.ru/album/88742/track/529649
-    const trackMatch = url.match(/track\/(\d+)/);
-    if (trackMatch) {
-        return `https://music.yandex.ru/iframe/#track/${trackMatch[1]}`;
-    }
-    
-    const albumMatch = url.match(/album\/(\d+)/);
-    if (albumMatch) {
-        return `https://music.yandex.ru/iframe/#album/${albumMatch[1]}`;
-    }
-    
-    return null;
-}
-
-/**
- * Получение embed URL для Spotify
- * @param {string} url - оригинальная ссылка
- * @returns {string|null} embed ссылка
- */
-function getSpotifyEmbedUrl(url) {
-    // Пример: https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT
-    const match = url.match(/track[\/:]([a-zA-Z0-9]+)/);
-    if (match) {
-        return `https://open.spotify.com/embed/track/${match[1]}`;
-    }
-    return null;
-}
-
-/**
- * Получение embed URL для YouTube
- * @param {string} url - оригинальная ссылка
- * @returns {string|null} embed ссылка
- */
-function getYouTubeEmbedUrl(url) {
-    // Пример: https://www.youtube.com/watch?v=dQw4w9WgXcQ
-    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
-    if (match) {
-        return `https://www.youtube.com/embed/${match[1]}`;
-    }
-    return null;
-}
-
-/**
  * Загрузка рекомендаций из базы данных
- * @param {string} emotionCode - код эмоции
  */
 async function loadRecommendationsFromDB(emotionCode) {
     try {
-        // Пытаемся загрузить данные из базы через API
         const response = await fetch(`${API_URL}/api/recommendation?emotion=${emotionCode}`);
         
         if (!response.ok) {
@@ -172,7 +135,6 @@ async function loadRecommendationsFromDB(emotionCode) {
         const data = await response.json();
         console.log('Данные из базы данных:', data);
         
-        // Обрабатываем данные в зависимости от структуры
         if (data.materials) {
             window.currentEmotionMaterials = data.materials;
         } else if (data.material) {
@@ -180,20 +142,11 @@ async function loadRecommendationsFromDB(emotionCode) {
         } else if (data.music || data.video || data.images || data.exercises || data.articles) {
             window.currentEmotionMaterials = data;
         } else {
-            console.warn('Неизвестная структура данных, пробуем определить автоматически:', data);
+            console.warn('Неизвестная структура данных:', data);
             window.currentEmotionMaterials = detectMaterialsStructure(data);
         }
         
         console.log('Обработанные материалы из БД:', window.currentEmotionMaterials);
-        
-        // Проверяем, есть ли вообще какие-то материалы
-        const hasMaterials = Object.values(window.currentEmotionMaterials).some(
-            arr => Array.isArray(arr) && arr.length > 0
-        );
-        
-        if (!hasMaterials) {
-            console.warn('В базе данных нет материалов для этой эмоции');
-        }
         
     } catch (error) {
         console.error('Ошибка при загрузке из базы данных:', error);
@@ -203,8 +156,6 @@ async function loadRecommendationsFromDB(emotionCode) {
 
 /**
  * Пытается определить структуру материалов из полученных данных
- * @param {Object} data - данные из БД
- * @returns {Object} структурированные материалы
  */
 function detectMaterialsStructure(data) {
     const structured = {
@@ -215,7 +166,6 @@ function detectMaterialsStructure(data) {
         articles: []
     };
     
-    // Если data - массив, группируем по полю type
     if (Array.isArray(data)) {
         data.forEach(item => {
             if (item.type && structured.hasOwnProperty(item.type)) {
@@ -226,52 +176,29 @@ function detectMaterialsStructure(data) {
                     structured[category].push(item);
                 }
             } else {
-                // Если тип не указан, пробуем определить по содержимому
-                if (item.url) {
-                    if (item.url.match(/\.(mp3|wav|ogg)$/i) || 
-                        item.url.includes('music') || 
-                        item.url.includes('yandex') || 
-                        item.url.includes('spotify')) {
-                        structured.music.push(item);
-                    } else if (item.url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-                        structured.images.push(item);
-                    } else if (item.url.match(/\.(mp4|webm|ogg)$/i) || 
-                               item.url.includes('youtube')) {
+                // По умолчанию все ссылки на VK отправляем в music
+                if (item.url && (item.url.includes('vk.com') || item.url.includes('vk.ru'))) {
+                    if (item.url.includes('video')) {
                         structured.video.push(item);
                     } else {
-                        structured.articles.push(item);
+                        structured.music.push(item);
                     }
+                } else if (item.url && item.url.match(/\.(mp3|wav|ogg)$/i)) {
+                    structured.music.push(item);
+                } else if (item.url && item.url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                    structured.images.push(item);
+                } else if (item.url && (item.url.includes('youtube') || item.url.includes('rutube'))) {
+                    structured.video.push(item);
                 } else {
                     structured.articles.push(item);
                 }
             }
         });
     } else {
-        // Если data - объект, оставляем как есть
         return data;
     }
     
     return structured;
-}
-
-/**
- * Загрузка содержимого текстового файла из базы
- * @param {string} url - URL файла из БД
- * @returns {Promise<string|null>} содержимое файла
- */
-async function loadTextFileContent(url) {
-    try {
-        // Если URL уже полный, используем его, иначе добавляем базовый URL
-        const fullUrl = url.startsWith('http') ? url : `${API_URL}${url}`;
-        const response = await fetch(fullUrl);
-        
-        if (response.ok) {
-            return await response.text();
-        }
-    } catch (error) {
-        console.error('Ошибка загрузки текстового файла:', error);
-    }
-    return null;
 }
 
 function displayEmotionInfo(emotionData) {
@@ -351,7 +278,6 @@ function initTabs() {
         });
     });
     
-    // Активируем первую вкладку
     const defaultTab = document.querySelector('.tab');
     if (defaultTab) {
         defaultTab.classList.add('active');
@@ -364,8 +290,6 @@ async function showTabContent(tabId, container) {
     const materials = window.currentEmotionMaterials || {};
     
     let items = [];
-    let title = '';
-    let icon = '';
     
     const tabMapping = {
         'music': 'music',
@@ -378,19 +302,6 @@ async function showTabContent(tabId, container) {
     const dataField = tabMapping[tabId];
     items = materials[dataField] || [];
     
-    // Загружаем содержимое текстовых файлов для статей
-    if (tabId === 'articles' && items.length > 0) {
-        for (const item of items) {
-            const fileUrl = item.file_url || item.fileUrl || item.url || item.path || item.content_url;
-            if (fileUrl) {
-                const content = await loadTextFileContent(fileUrl);
-                if (content) {
-                    item.displayContent = content;
-                }
-            }
-        }
-    }
-    
     let html = `<h2 style="margin-top: 0; color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">${getIconForTab(tabId)} ${getTitleForTab(tabId)}</h2>`;
     
     if (items && items.length > 0) {
@@ -402,9 +313,6 @@ async function showTabContent(tabId, container) {
     container.innerHTML = html;
 }
 
-/**
- * Получить иконку для вкладки
- */
 function getIconForTab(tabId) {
     const icons = {
         'music': '🎵',
@@ -416,9 +324,6 @@ function getIconForTab(tabId) {
     return icons[tabId] || '📁';
 }
 
-/**
- * Получить заголовок для вкладки
- */
 function getTitleForTab(tabId) {
     const titles = {
         'music': 'Музыка',
@@ -430,9 +335,6 @@ function getTitleForTab(tabId) {
     return titles[tabId] || tabId;
 }
 
-/**
- * Рендеринг содержимого вкладки
- */
 function renderTabContent(tabId, items) {
     switch(tabId) {
         case 'images':
@@ -450,13 +352,10 @@ function renderTabContent(tabId, items) {
     }
 }
 
-/**
- * Рендеринг изображений из базы данных
- */
 function renderImages(items) {
     let html = '<div class="images-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding: 15px 0;">';
     
-    items.forEach((item, index) => {
+    items.forEach((item) => {
         const imageUrl = item.url || item.src || item.path || item.image_url || item.imageUrl;
         const fullImageUrl = imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `${API_URL}${imageUrl}`) : null;
         
@@ -481,93 +380,71 @@ function renderImages(items) {
 }
 
 /**
- * Рендеринг музыки из базы данных с поддержкой внешних сервисов
+ * Рендеринг музыки с поддержкой VK
  */
 function renderMusic(items) {
     let html = '<div class="music-list">';
     
-    items.forEach((item, index) => {
-        const audioUrl = item.url || item.audio_url || item.audioUrl || item.file_url || item.fileUrl;
-        const service = detectMusicService(audioUrl);
+    items.forEach((item) => {
+        // Ищем URL в разных полях
+        const audioUrl = item.url || item.audio_url || item.audioUrl || item.file_url || item.fileUrl || item.link;
         
-        // Для внешних сервисов показываем красивую карточку с кнопкой
-        if (service.type !== 'local' && service.type !== 'unknown') {
-            // Пробуем получить embed URL для некоторых сервисов
-            let embedHtml = '';
-            
-            if (service.type === 'yandex') {
-                const embedUrl = getYandexMusicEmbedUrl(audioUrl);
-                if (embedUrl) {
-                    embedHtml = `
-                        <iframe 
-                            frameborder="0" 
-                            allow="autoplay; *; clipboard-write" 
-                            style="width:100%; max-width:100%; height: 100px; overflow:hidden; border-radius:10px; margin: 15px 0;" 
-                            src="${embedUrl}">
-                        </iframe>
-                    `;
-                }
-            } else if (service.type === 'spotify') {
-                const embedUrl = getSpotifyEmbedUrl(audioUrl);
-                if (embedUrl) {
-                    embedHtml = `
-                        <iframe 
-                            src="${embedUrl}" 
-                            width="100%" 
-                            height="80" 
-                            frameborder="0" 
-                            allowtransparency="true" 
-                            allow="encrypted-media"
-                            style="border-radius:12px; margin: 15px 0;">
-                        </iframe>
-                    `;
-                }
-            } else if (service.type === 'youtube') {
-                const embedUrl = getYouTubeEmbedUrl(audioUrl);
-                if (embedUrl) {
-                    embedHtml = `
-                        <iframe 
-                            width="100%" 
-                            height="200" 
-                            src="${embedUrl}" 
-                            frameborder="0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowfullscreen
-                            style="border-radius:12px; margin: 15px 0;">
-                        </iframe>
-                    `;
-                }
-            }
+        if (!audioUrl) {
+            console.warn('Нет URL для музыкального элемента:', item);
+            return;
+        }
+        
+        // Проверяем, является ли ссылка VK
+        const isVK = audioUrl.includes('vk.com') || audioUrl.includes('vk.ru');
+        
+        // Для VK ссылок
+        if (isVK) {
+            const vkInfo = extractVKMusicInfo(audioUrl);
             
             html += `
-                <div class="music-item external-service" style="margin-bottom: 20px; padding: 25px; background: linear-gradient(135deg, ${service.color}20 0%, ${service.color}40 100%); border: 1px solid ${service.color}40; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <div class="music-item vk-music" style="margin-bottom: 20px; padding: 25px; background: linear-gradient(135deg, #0077FF10 0%, #0077FF20 100%); border: 1px solid #0077FF30; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
                     <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
-                        <div style="font-size: 56px; background: ${service.color}20; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">${service.icon}</div>
+                        <div style="font-size: 56px; background: #0077FF20; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                            <img src="https://vk.com/images/icons/favicons/favicon-32x32.png" style="width: 40px; height: 40px;" onerror="this.style.display='none'; this.parentElement.innerHTML='🎵'">
+                        </div>
                         <div style="flex: 1; min-width: 200px;">
-                            <h3 style="margin: 0 0 8px 0; color: #333; font-size: 20px; font-weight: 600;">${item.title || 'Трек на внешнем сервисе'}</h3>
-                            ${item.artist || item.author ? `<div style="margin: 0 0 12px 0; color: ${service.color}; font-size: 16px; font-weight: 500;">${item.artist || item.author}</div>` : ''}
+                            <h3 style="margin: 0 0 8px 0; color: #333; font-size: 20px; font-weight: 600;">${item.title || 'Трек в VK Музыке'}</h3>
+                            ${item.artist || item.author ? `<div style="margin: 0 0 12px 0; color: #0077FF; font-size: 16px; font-weight: 500;">${item.artist || item.author}</div>` : ''}
                             ${item.description ? `<p style="margin: 0 0 15px 0; color: #666; line-height: 1.5;">${item.description}</p>` : ''}
                             
-                            ${embedHtml}
+                            <div style="background: #f5f5f5; padding: 15px; border-radius: 30px; margin: 15px 0; text-align: center;">
+                                <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+                                    ⚠️ VK Музыку можно слушать только в официальном приложении или на сайте VK
+                                </p>
+                                <audio controls style="width: 100%; opacity: 0.5;" disabled>
+                                    <source src="#" type="audio/mpeg">
+                                </audio>
+                            </div>
                             
-                            <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
-                                <span style="background: ${service.color}; color: white; padding: 6px 15px; border-radius: 30px; font-size: 14px; font-weight: 500;">
-                                    ${service.icon} Доступно на ${service.name}
+                            <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; justify-content: center;">
+                                <span style="background: #0077FF; color: white; padding: 6px 15px; border-radius: 30px; font-size: 14px; font-weight: 500;">
+                                    🎵 VK Музыка
                                 </span>
-                                <a href="${audioUrl}" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px; background: ${service.color}; color: white; text-decoration: none; border-radius: 30px; font-weight: 500; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 10px ${service.color}40;" 
-                                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 15px ${service.color}60'"
-                                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px ${service.color}40'">
-                                    <span>Слушать на ${service.name}</span>
+                                <a href="${audioUrl}" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 30px; background: #0077FF; color: white; text-decoration: none; border-radius: 30px; font-weight: 500; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 10px #0077FF40;" 
+                                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 15px #0077FF60'"
+                                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px #0077FF40'">
+                                    <span>Слушать в VK</span>
                                     <span style="font-size: 18px;">→</span>
                                 </a>
                             </div>
+                            
+                            ${vkInfo && vkInfo.type === 'playlist' ? `
+                                <p style="margin-top: 15px; font-size: 13px; color: #999; text-align: center;">
+                                    Это плейлист. Чтобы послушать, откройте его в VK
+                                </p>
+                            ` : ''}
                         </div>
                     </div>
                 </div>
             `;
         } 
-        // Для локальных аудиофайлов показываем плеер
-        else if (audioUrl) {
+        // Для локальных аудиофайлов
+        else if (audioUrl.match(/\.(mp3|wav|ogg|m4a)$/i)) {
             const fullAudioUrl = audioUrl.startsWith('http') ? audioUrl : `${API_URL}${audioUrl}`;
             html += `
                 <div class="music-item" style="margin-bottom: 20px; padding: 20px; background: white; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
@@ -587,6 +464,23 @@ function renderMusic(items) {
                 </div>
             `;
         }
+        // Для других внешних ссылок
+        else {
+            html += `
+                <div class="music-item external-service" style="margin-bottom: 20px; padding: 20px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 12px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="font-size: 40px;">🔗</div>
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 5px 0;">${item.title || 'Внешний ресурс'}</h3>
+                            ${item.description ? `<p style="margin: 0 0 10px 0; color: #666;">${item.description}</p>` : ''}
+                            <a href="${audioUrl}" target="_blank" style="display: inline-block; padding: 8px 16px; background: #2196F3; color: white; text-decoration: none; border-radius: 4px;">
+                                Перейти к источнику
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
     });
     
     html += '</div>';
@@ -594,20 +488,31 @@ function renderMusic(items) {
 }
 
 /**
- * Рендеринг видео из базы данных
+ * Рендеринг видео
  */
 function renderVideo(items) {
     let html = '<div class="video-list">';
     
-    items.forEach((item, index) => {
+    items.forEach((item) => {
         const videoUrl = item.url || item.video_url || item.videoUrl || item.embed_url || item.embedUrl;
+        
+        // Проверяем, является ли ссылка VK видео
+        const isVKVideo = videoUrl && (videoUrl.includes('vk.com/video') || videoUrl.includes('vk.ru/video'));
         
         html += `
             <div class="video-item" style="margin-bottom: 30px; padding: 20px; background: white; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
                 <h3 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">${item.title || item.name || 'Видео'}</h3>
                 ${item.description ? `<p style="margin: 0 0 15px 0; color: #666;">${item.description}</p>` : ''}
                 
-                ${videoUrl ? `
+                ${isVKVideo ? `
+                    <div style="padding: 40px; text-align: center; background: #f5f5f5; border-radius: 8px;">
+                        <img src="https://vk.com/images/icons/favicons/favicon-32x32.png" style="width: 48px; height: 48px; margin-bottom: 15px;">
+                        <p style="margin-bottom: 20px;">Это видео доступно для просмотра только на VK</p>
+                        <a href="${videoUrl}" target="_blank" style="display: inline-block; padding: 10px 20px; background: #0077FF; color: white; text-decoration: none; border-radius: 6px;">
+                            Смотреть на VK →
+                        </a>
+                    </div>
+                ` : videoUrl ? `
                     <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; margin-bottom: 10px;">
                         <iframe 
                             src="${videoUrl}" 
@@ -624,13 +529,10 @@ function renderVideo(items) {
     return html;
 }
 
-/**
- * Рендеринг упражнений из базы данных
- */
 function renderExercises(items) {
     let html = '<div class="exercises-list">';
     
-    items.forEach((item, index) => {
+    items.forEach((item) => {
         html += `
             <div class="exercise-item" style="margin-bottom: 20px; padding: 20px; background: white; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
                 <h3 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">${item.title || item.name || 'Упражнение'}</h3>
@@ -650,13 +552,10 @@ function renderExercises(items) {
     return html;
 }
 
-/**
- * Рендеринг статей из базы данных
- */
 function renderArticles(items) {
     let html = '<div class="articles-list">';
     
-    items.forEach((item, index) => {
+    items.forEach((item) => {
         const content = item.displayContent || item.text || item.body || item.content || item.description;
         
         html += `
@@ -681,13 +580,10 @@ function renderArticles(items) {
     return html;
 }
 
-/**
- * Рендеринг по умолчанию (для отладки)
- */
 function renderDefault(items) {
     let html = '<div class="default-list">';
     
-    items.forEach((item, index) => {
+    items.forEach((item) => {
         html += `
             <div class="default-item" style="margin-bottom: 15px; padding: 15px; background: white; border: 1px solid #e0e0e0; border-radius: 8px;">
                 <pre style="margin: 0; white-space: pre-wrap;">${JSON.stringify(item, null, 2)}</pre>
@@ -699,9 +595,6 @@ function renderDefault(items) {
     return html;
 }
 
-/**
- * HTML для пустого состояния
- */
 function getEmptyStateHTML(tabId) {
     const messages = {
         'music': '🎵 В базе данных нет музыкальных материалов для этой эмоции',
@@ -736,7 +629,6 @@ function displayError(message) {
         tabs.style.display = 'none';
     }
     
-    // Добавляем кнопку возврата
     const container = document.querySelector('.container');
     if (container) {
         const backButton = document.createElement('button');
@@ -747,7 +639,7 @@ function displayError(message) {
     }
 }
 
-// Добавляем CSS для анимации
+// Добавляем CSS
 const style = document.createElement('style');
 style.textContent = `
     .image-item:hover {
@@ -755,7 +647,7 @@ style.textContent = `
         box-shadow: 0 8px 15px rgba(0,0,0,0.15);
     }
     
-    .music-item:hover, .exercise-item:hover, .article-item:hover {
+    .music-item:hover, .exercise-item:hover, .article-item:hover, .video-item:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(0,0,0,0.1);
     }
@@ -778,12 +670,13 @@ style.textContent = `
         background-color: #f0f0f0;
     }
     
-    .external-service {
-        transition: transform 0.3s, box-shadow 0.3s;
+    audio[disabled] {
+        background: #f0f0f0;
+        cursor: not-allowed;
     }
     
-    .external-service:hover {
-        transform: translateY(-2px);
+    .vk-music {
+        transition: transform 0.3s, box-shadow 0.3s;
     }
 `;
 document.head.appendChild(style);
