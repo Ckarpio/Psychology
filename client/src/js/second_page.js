@@ -1,3 +1,5 @@
+
+
 import { API_URL } from "./const/const.js";
 
 // Глобальная переменная для хранения материалов
@@ -327,7 +329,7 @@ function detectMaterialsStructure(data) {
             } else {
                 // Определяем по URL или наличию текста
                 const url = item.url || item.изображения || '';
-                const hasText = item.text || item.body || item.content || item.совет || item.упражнение;
+                const hasText = item.text || item.body || item.content || item.exercise || item.article;
                 
                 if (url.includes('rutube.ru')) {
                     structured.video.push(item);
@@ -343,9 +345,9 @@ function detectMaterialsStructure(data) {
                     structured.images.push(item);
                 } else if (hasText) {
                     // Если есть текст, определяем по наличию полей
-                    if (item.упражнение || item.instructions || item.body) {
+                    if (item.exercise || item.instructions || item.body) {
                         structured.exercises.push(item);
-                    } else if (item.совет || item.article || item.text) {
+                    } else if (item.article || item.text || item.content) {
                         structured.articles.push(item);
                     } else {
                         structured.articles.push(item);
@@ -492,8 +494,8 @@ function getTitleForTab(tabId) {
         'music': 'Музыка',
         'video': 'Видео',
         'images': 'Фотографии',
-        'exercises': 'Советы и упражнения',
-        'articles': 'Статьи'
+        'exercises': 'Упражнения',
+        'articles': 'Советы и статьи'
     };
     return titles[tabId] || tabId;
 }
@@ -765,16 +767,16 @@ function renderRutubeVideos(items) {
 }
 
 /**
- * Рендеринг советов и упражнений из текста в БД
+ * Рендеринг упражнений из текста в БД (поле exercise)
  */
 function renderExercises(items) {
     let html = '<div class="exercises-list">';
     
     items.forEach((item) => {
-        // Ищем текст совета или упражнения в разных полях БД
-        const exerciseText = item.упражнение || item.совет || item.text || item.body || item.content || item.instructions || item.description;
-        const title = item.title || item.name || item.заголовок || 'Упражнение';
-        const author = item.author || item.автор || '';
+        // Ищем текст упражнения в разных полях БД, приоритет - exercise
+        const exerciseText = item.exercise || item.text || item.body || item.content || item.instructions || item.description;
+        const title = item.title || item.name || 'Упражнение';
+        const author = item.author || '';
         
         if (!exerciseText) {
             console.warn('Нет текста для упражнения:', item);
@@ -785,7 +787,7 @@ function renderExercises(items) {
             <div class="exercise-item" style="margin-bottom: 25px; padding: 30px; background: white; border: 1px solid #e0e0e0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s ease;">
                 <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
                     <div style="background: #4CAF50; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <span style="font-size: 24px; color: white;">📝</span>
+                        <span style="font-size: 24px; color: white;">🏋️</span>
                     </div>
                     <div style="flex: 1;">
                         <h3 style="margin: 0 0 5px 0; color: #333; font-size: 24px; font-weight: 600;">${title}</h3>
@@ -803,7 +805,7 @@ function renderExercises(items) {
                 
                 <div style="margin-top: 15px; display: flex; gap: 10px;">
                     <span style="background: #4CAF5020; color: #4CAF50; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
-                        📖 Совет
+                        📋 Упражнение
                     </span>
                 </div>
             </div>
@@ -815,16 +817,16 @@ function renderExercises(items) {
 }
 
 /**
- * Рендеринг статей из текста в БД
+ * Рендеринг советов и статей из текста в БД (поле article)
  */
 function renderArticles(items) {
     let html = '<div class="articles-list">';
     
     items.forEach((item) => {
-        // Ищем текст статьи в разных полях БД
-        const articleText = item.text || item.body || item.content || item.description || item.статья || item.совет;
-        const title = item.title || item.name || item.заголовок || 'Статья';
-        const author = item.author || item.автор || '';
+        // Ищем текст статьи в разных полях БД, приоритет - article
+        const articleText = item.article || item.text || item.body || item.content || item.description;
+        const title = item.title || item.name || 'Статья';
+        const author = item.author || '';
         
         if (!articleText) {
             console.warn('Нет текста для статьи:', item);
@@ -835,7 +837,7 @@ function renderArticles(items) {
             <div class="article-item" style="margin-bottom: 25px; padding: 30px; background: white; border: 1px solid #e0e0e0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s ease;">
                 <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
                     <div style="background: #2196F3; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <span style="font-size: 24px; color: white;">📄</span>
+                        <span style="font-size: 24px; color: white;">💡</span>
                     </div>
                     <div style="flex: 1;">
                         <h3 style="margin: 0 0 5px 0; color: #333; font-size: 26px; font-weight: 700;">${title}</h3>
@@ -847,6 +849,12 @@ function renderArticles(items) {
                     ${articleText.split('\n').map(paragraph => 
                         paragraph.trim() ? `<p style="margin-bottom: 15px;">${paragraph}</p>` : ''
                     ).join('')}
+                </div>
+                
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <span style="background: #2196F320; color: #2196F3; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
+                        ✨ Совет
+                    </span>
                 </div>
                 
                 ${item.external_url || item.link || item.url ? `
@@ -885,8 +893,8 @@ function getEmptyStateHTML(tabId) {
         'music': '🎵 В базе данных нет музыкальных материалов для этой эмоции',
         'video': '🎬 В базе данных нет видео с Rutube для этой эмоции',
         'images': '🖼️ В базе данных нет фотографий для этой эмоции',
-        'exercises': '📖 В базе данных нет советов и упражнений для этой эмоции',
-        'articles': '📄 В базе данных нет статей для этой эмоции'
+        'exercises': '📋 В базе данных нет упражнений для этой эмоции',
+        'articles': '💡 В базе данных нет советов и статей для этой эмоции'
     };
     
     return `
