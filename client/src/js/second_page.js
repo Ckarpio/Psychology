@@ -488,10 +488,7 @@ function renderMusic(items) {
                                 </div>
                             ` : ''}
                             
-                            <!-- Ссылка для копирования (показываем ID если есть) -->
-                            <div style="margin: 0 0 15px 0; padding: 10px; background: #f5f5f5; border-radius: 8px; font-family: monospace; font-size: 12px; color: #666; word-break: break-all;">
-                                🔗 ${audioUrl}
-                            </div>
+                            
                             
                             <!-- Кнопка перехода в VK -->
                             <a href="${audioUrl}" target="_blank" 
