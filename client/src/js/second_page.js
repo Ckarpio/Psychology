@@ -95,7 +95,7 @@ function addBackButton() {
 /**
  * Функция для обработки URL Pinterest
  * @param {string} url - URL изображения
- * @returns {string} - обработанный URL для отображения
+ * @returns {string|null} - обработанный URL или null
  */
 function processPinterestUrl(url) {
     if (!url) return url;
@@ -106,7 +106,7 @@ function processPinterestUrl(url) {
     }
     
     // Если это ссылка на пин, пытаемся преобразовать
-    if (url.includes('pinterest.com/pin/')) {
+    if (url.includes('pinterest.com/pin/') || url.includes('pin.it/')) {
         console.warn('Обнаружена ссылка на пин Pinterest. Нужна прямая ссылка на изображение (i.pinimg.com)');
         return null;
     }
@@ -117,7 +117,7 @@ function processPinterestUrl(url) {
 /**
  * Функция для загрузки и обработки фотографий
  * @param {string} imageUrl - URL изображения
- * @returns {Promise<string>} - обработанный URL или путь к изображению
+ * @returns {Promise<string|null>} - обработанный URL или путь к изображению
  */
 async function loadImage(imageUrl) {
     if (!imageUrl) return null;
@@ -174,7 +174,7 @@ async function preloadImages(items) {
     const loadedItems = [];
     
     for (const item of items) {
-        // Ищем URL в поле "изображения" (русское название)
+        // Ищем URL в поле "изображения" (русское название) и других возможных полях
         const imageUrl = item.изображения || item.url || item.src || item.path || item.image_url || item.imageUrl;
         
         if (imageUrl) {
@@ -428,25 +428,23 @@ function detectMaterialsStructure(data) {
                     structured[category].push(item);
                 }
             } else {
-                // Определяем по URL
-                if (item.url || item.изображения) {
-                    const url = item.url || item.изображения;
-                    
-                    if (url.includes('rutube.ru')) {
+                // Определяем по URL (проверяем разные поля)
+                const url = item.url || item.изображения || '';
+                
+                if (url.includes('rutube.ru')) {
+                    structured.video.push(item);
+                } else if (url.includes('vk.com') || url.includes('vk.ru')) {
+                    if (url.includes('video')) {
                         structured.video.push(item);
-                    } else if (url.includes('vk.com') || url.includes('vk.ru')) {
-                        if (url.includes('video')) {
-                            structured.video.push(item);
-                        } else {
-                            structured.music.push(item);
-                        }
-                    } else if (url.match(/\.(mp3|wav|ogg)$/i)) {
-                        structured.music.push(item);
-                    } else if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) || url.includes('i.pinimg.com')) {
-                        structured.images.push(item);
                     } else {
-                        structured.articles.push(item);
+                        structured.music.push(item);
                     }
+                } else if (url.match(/\.(mp3|wav|ogg)$/i)) {
+                    structured.music.push(item);
+                } else if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) || url.includes('i.pinimg.com')) {
+                    structured.images.push(item);
+                } else if (url) {
+                    structured.articles.push(item);
                 } else {
                     structured.articles.push(item);
                 }
@@ -636,7 +634,7 @@ async function renderImages(items) {
         const author = item.author || item.photographer || item.автор || '';
         
         // Определяем, Pinterest ли это
-        const isPinterest = imageUrl.includes('i.pinimg.com');
+        const isPinterest = imageUrl && imageUrl.includes('i.pinimg.com');
         
         html += `
             <div class="image-item" style="background: white; border: 1px solid #e0e0e0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer;" 
@@ -1136,80 +1134,3 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
-
-/**
- * ВРЕМЕННАЯ ОТЛАДОЧНАЯ ФУНКЦИЯ
- * Покажет, какие данные реально приходят из БД
- */
-async function renderImages(items) {
-    let html = '<div style="padding: 20px; background: #f0f0f0;">';
-    
-    console.log('🔍 ОТЛАДКА ИЗОБРАЖЕНИЙ:');
-    console.log('Получены данные из БД:', JSON.stringify(items, null, 2));
-    console.log('Количество элементов:', items.length);
-    
-    if (items.length === 0) {
-        return '<p>Нет изображений в БД</p>';
-    }
-    
-    for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        
-        // Проверяем все возможные поля, где может быть ссылка
-        const possibleUrls = [
-            { field: 'изображения', value: item.изображения },
-            { field: 'url', value: item.url },
-            { field: 'src', value: item.src },
-            { field: 'path', value: item.path },
-            { field: 'image_url', value: item.image_url },
-            { field: 'imageUrl', value: item.imageUrl }
-        ];
-        
-        // Находим первый непустой URL
-        let imageUrl = null;
-        let usedField = null;
-        for (const p of possibleUrls) {
-            if (p.value) {
-                imageUrl = p.value;
-                usedField = p.field;
-                break;
-            }
-        }
-        
-        console.log(`\n📌 Элемент ${i + 1}:`);
-        console.log('  Все поля объекта:', Object.keys(item));
-        console.log('  Значение поля "изображения":', item.изображения);
-        console.log('  Используемое поле:', usedField);
-        console.log('  Найденный URL:', imageUrl);
-        
-        html += `
-            <div style="margin-bottom: 30px; padding: 20px; border: 2px solid #333; border-radius: 10px; background: white;">
-                <h3 style="margin-top: 0;">Элемент #${i + 1}</h3>
-                
-                <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
-                    <p><strong>Поле "изображения":</strong> ${item.изображения || '❌ НЕ НАЙДЕНО'}</p>
-                    <p><strong>Поле "название":</strong> ${item.название || 'Нет'}</p>
-                    <p><strong>Поле "описание":</strong> ${item.описание || 'Нет'}</p>
-                    <p><strong>Поле "автор":</strong> ${item.автор || 'Нет'}</p>
-                </div>
-                
-                <p><strong>URL для загрузки:</strong> ${imageUrl || '❌ НЕТ URL'}</p>
-                
-                ${imageUrl ? `
-                    <div style="margin-top: 15px;">
-                        <p><strong>Попытка загрузить изображение:</strong></p>
-                        <img src="${imageUrl}" 
-                             style="max-width: 300px; max-height: 200px; border: 3px solid #4CAF50;"
-                             onload="console.log('✅ Изображение ${i + 1} загружено'); this.style.border='3px solid green';"
-                             onerror="console.error('❌ Ошибка загрузки изображения ${i + 1}'); this.style.border='3px solid red'; this.parentElement.innerHTML+='<p style=\'color:red;\'>Ошибка загрузки!</p>'; this.style.display='none';">
-                        
-                        <p><a href="${imageUrl}" target="_blank" style="display: inline-block; margin-top: 10px; padding: 8px 16px; background: #2196F3; color: white; text-decoration: none; border-radius: 4px;">🔗 Открыть ссылку напрямую</a></p>
-                    </div>
-                ` : '<p style="color:red;">Нет ссылки для загрузки</p>'}
-            </div>
-        `;
-    }
-    
-    html += '</div>';
-    return html;
-}
