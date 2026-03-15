@@ -93,6 +93,28 @@ function addBackButton() {
 }
 
 /**
+ * Функция для обработки URL Pinterest
+ * @param {string} url - URL изображения
+ * @returns {string} - обработанный URL для отображения
+ */
+function processPinterestUrl(url) {
+    if (!url) return url;
+    
+    // Если это уже прямая ссылка на изображение Pinterest
+    if (url.includes('i.pinimg.com')) {
+        return url;
+    }
+    
+    // Если это ссылка на пин, пытаемся преобразовать
+    if (url.includes('pinterest.com/pin/')) {
+        console.warn('Обнаружена ссылка на пин Pinterest. Нужна прямая ссылка на изображение (i.pinimg.com)');
+        return null;
+    }
+    
+    return url;
+}
+
+/**
  * Функция для загрузки и обработки фотографий
  * @param {string} imageUrl - URL изображения
  * @returns {Promise<string>} - обработанный URL или путь к изображению
@@ -100,23 +122,32 @@ function addBackButton() {
 async function loadImage(imageUrl) {
     if (!imageUrl) return null;
     
-    console.log('Попытка загрузить изображение:', imageUrl);
+    // Обрабатываем URL Pinterest
+    const processedUrl = processPinterestUrl(imageUrl);
+    if (!processedUrl) return null;
+    
+    console.log('Попытка загрузить изображение:', processedUrl);
     
     try {
         // Если это уже полный URL, возвращаем как есть
-        if (imageUrl.startsWith('http')) {
+        if (processedUrl.startsWith('http')) {
+            // Для Pinterest не проверяем HEAD-запросом, т.к. могут быть ограничения
+            if (processedUrl.includes('i.pinimg.com')) {
+                return processedUrl;
+            }
+            
             // Проверяем, доступно ли изображение
-            const response = await fetch(imageUrl, { method: 'HEAD' }).catch(() => null);
+            const response = await fetch(processedUrl, { method: 'HEAD' }).catch(() => null);
             if (response && response.ok) {
-                return imageUrl;
+                return processedUrl;
             } else {
-                console.warn('Изображение не доступно по URL:', imageUrl);
+                console.warn('Изображение не доступно по URL:', processedUrl);
                 return null;
             }
         }
         
         // Если это относительный путь, добавляем базовый URL
-        const fullUrl = `${API_URL}${imageUrl}`;
+        const fullUrl = `${API_URL}${processedUrl}`;
         
         // Проверяем, доступно ли изображение
         const response = await fetch(fullUrl, { method: 'HEAD' }).catch(() => null);
@@ -411,7 +442,7 @@ function detectMaterialsStructure(data) {
                         }
                     } else if (url.match(/\.(mp3|wav|ogg)$/i)) {
                         structured.music.push(item);
-                    } else if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)) {
+                    } else if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) || url.includes('i.pinimg.com')) {
                         structured.images.push(item);
                     } else {
                         structured.articles.push(item);
@@ -582,7 +613,7 @@ async function renderTabContent(tabId, items) {
 }
 
 /**
- * Рендеринг фотографий с поддержкой поля "изображения"
+ * Рендеринг фотографий с поддержкой Pinterest
  */
 async function renderImages(items) {
     let html = '<div class="images-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; padding: 20px 0;">';
@@ -604,6 +635,9 @@ async function renderImages(items) {
         const description = item.description || item.описание || '';
         const author = item.author || item.photographer || item.автор || '';
         
+        // Определяем, Pinterest ли это
+        const isPinterest = imageUrl.includes('i.pinimg.com');
+        
         html += `
             <div class="image-item" style="background: white; border: 1px solid #e0e0e0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer;" 
                  onclick="window.open('${imageUrl}', '_blank')"
@@ -616,7 +650,8 @@ async function renderImages(items) {
                          alt="${title}" 
                          style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;"
                          onerror="this.onerror=null; 
-                                  this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f0f0f0;color:#999;\'><span style=\'font-size:48px;\'>🖼️</span><span style=\'margin-top:10px;\'>Фото не доступно</span></div>';">
+                                  this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f0f0f0;color:#999;\'><span style=\'font-size:48px;\'>🖼️</span><span style=\'margin-top:10px;\'>Фото не доступно</span></div>';"
+                         onload="this.style.opacity='1';">
                 </div>
                 
                 <!-- Информация о фотографии -->
@@ -625,10 +660,15 @@ async function renderImages(items) {
                     ${author ? `<div style="margin: 0 0 8px 0; color: #666; font-size: 14px;">📷 ${author}</div>` : ''}
                     ${description ? `<p style="margin: 0 0 12px 0; color: #666; font-size: 14px; line-height: 1.5;">${description}</p>` : ''}
                     
-                    <div style="margin-top: 12px;">
+                    <div style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
                         <span style="background: #4CAF5020; color: #4CAF50; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
                             🖼️ Фотография
                         </span>
+                        ${isPinterest ? `
+                            <span style="background: #E6002320; color: #E60023; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
+                                📌 Pinterest
+                            </span>
+                        ` : ''}
                     </div>
                 </div>
             </div>
