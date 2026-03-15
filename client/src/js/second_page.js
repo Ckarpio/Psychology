@@ -403,7 +403,7 @@ function detectMaterialsStructure(data) {
                         }
                     } else if (item.url.match(/\.(mp3|wav|ogg)$/i)) {
                         structured.music.push(item);
-                    } else if (item.url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                    } else if (item.url.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)) {
                         structured.images.push(item);
                     } else {
                         structured.articles.push(item);
@@ -524,7 +524,7 @@ async function showTabContent(tabId, container) {
     let html = `<h2 style="margin-top: 0; color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">${getIconForTab(tabId)} ${getTitleForTab(tabId)}</h2>`;
     
     if (items && items.length > 0) {
-        html += renderTabContent(tabId, items);
+        html += await renderTabContent(tabId, items);
     } else {
         html += getEmptyStateHTML(tabId);
     }
@@ -547,17 +547,17 @@ function getTitleForTab(tabId) {
     const titles = {
         'music': 'Музыка',
         'video': 'Видео',
-        'images': 'Картинки',
+        'images': 'Фотографии',
         'exercises': 'Упражнения',
         'articles': 'Статьи'
     };
     return titles[tabId] || tabId;
 }
 
-function renderTabContent(tabId, items) {
+async function renderTabContent(tabId, items) {
     switch(tabId) {
         case 'images':
-            return renderImages(items);
+            return await renderImages(items);
         case 'music':
             return renderMusic(items);
         case 'video':
@@ -572,7 +572,7 @@ function renderTabContent(tabId, items) {
 }
 
 /**
- * Рендеринг изображений с поддержкой загрузки
+ * Рендеринг фотографий с поддержкой загрузки
  */
 async function renderImages(items) {
     let html = '<div class="images-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; padding: 20px 0;">';
@@ -581,13 +581,14 @@ async function renderImages(items) {
     const loadedItems = await preloadImages(items);
     
     if (loadedItems.length === 0) {
-        return '<div class="empty-gallery" style="padding: 60px; text-align: center; color: #999;">🖼️ Нет доступных изображений</div>';
+        return '<div class="empty-gallery" style="padding: 80px 20px; text-align: center; background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%); border-radius: 24px; color: #999;"><p style="font-size: 64px; margin: 0 0 20px 0; opacity: 0.5;">🖼️</p><p style="font-size: 18px; color: #666;">Нет доступных фотографий</p></div>';
     }
     
     for (const item of loadedItems) {
         const imageUrl = item.loadedUrl;
-        const title = item.title || item.name || 'Изображение';
+        const title = item.title || item.name || 'Фотография';
         const description = item.description || '';
+        const author = item.author || item.photographer || '';
         
         html += `
             <div class="image-item" style="background: white; border: 1px solid #e0e0e0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer;" 
@@ -604,14 +605,19 @@ async function renderImages(items) {
                          onload="this.style.opacity='1';">
                 </div>
                 
-                <!-- Информация об изображении -->
+                <!-- Информация о фотографии -->
                 <div style="padding: 16px;">
                     <h4 style="margin: 0 0 8px 0; color: #333; font-size: 18px; font-weight: 600; line-height: 1.3;">${title}</h4>
-                    ${description ? `<p style="margin: 0; color: #666; font-size: 14px; line-height: 1.5;">${description}</p>` : ''}
+                    ${author ? `<div style="margin: 0 0 8px 0; color: #666; font-size: 14px;">📷 ${author}</div>` : ''}
+                    ${description ? `<p style="margin: 0 0 12px 0; color: #666; font-size: 14px; line-height: 1.5;">${description}</p>` : ''}
                     
-                    <div style="margin-top: 12px;">
+                    <div style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
                         <span style="background: #4CAF5020; color: #4CAF50; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
-                            🖼️ Изображение
+                            🖼️ Фотография
+                        </span>
+                        <span style="color: #999; font-size: 12px; display: flex; align-items: center; gap: 4px;">
+                            <span>📏</span> 
+                            ${item.width ? item.width + 'px' : 'Оригинальный размер'}
                         </span>
                     </div>
                 </div>
@@ -767,7 +773,7 @@ function renderMusic(items) {
 }
 
 /**
- * Рендеринг видео только с Rutube
+ * Рендеринг видео только с Rutube (без отображения длительности)
  */
 function renderRutubeVideos(items) {
     let html = '<div class="video-list rutube-videos">';
@@ -790,7 +796,7 @@ function renderRutubeVideos(items) {
             
             // Получаем название видео и автора
             const videoTitle = item.title || item.name || 'Видео на Rutube';
-            const videoAuthor = item.author || item.artist || item.channel || 'Rutube';
+            const videoAuthor = item.author || item.artist || item.channel || '';
             
             // Если есть embed URL - показываем плеер
             if (rutubeInfo.canEmbed && rutubeInfo.embedUrl) {
@@ -804,7 +810,7 @@ function renderRutubeVideos(items) {
                             <div style="flex: 1;">
                                 <h3 style="margin: 0 0 8px 0; color: #1A1A1A; font-size: 26px; font-weight: 700; line-height: 1.3;">${videoTitle}</h3>
                                 <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-                                    <span style="color: #34A1F0; font-size: 18px; font-weight: 500;">${videoAuthor}</span>
+                                    ${videoAuthor ? `<span style="color: #34A1F0; font-size: 18px; font-weight: 500;">${videoAuthor}</span>` : ''}
                                     <span style="background: #34A1F020; color: #34A1F0; padding: 4px 12px; border-radius: 30px; font-size: 13px; font-weight: 500;">
                                         Rutube
                                     </span>
@@ -824,14 +830,11 @@ function renderRutubeVideos(items) {
                             </iframe>
                         </div>
                         
-                        <!-- Информация и ссылки -->
+                        <!-- Информация и ссылки (без длительности) -->
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; padding: 0 10px;">
                             <div style="display: flex; gap: 15px; align-items: center;">
-                                <span style="color: #34A1F0; font-size: 14px;">
-                                    📊 ID: ${rutubeInfo.videoId || 'загрузка...'}
-                                </span>
-                                <span style="color: #999; font-size: 14px;">
-                                    ⏱️ Длительность: загрузка...
+                                <span style="color: #34A1F0; font-size: 14px; background: #34A1F010; padding: 4px 12px; border-radius: 20px;">
+                                    🆔 ID: ${rutubeInfo.videoId ? rutubeInfo.videoId.substring(0, 8) + '...' : 'загрузка'}
                                 </span>
                             </div>
                             <a href="${videoUrl}" target="_blank" 
@@ -850,6 +853,7 @@ function renderRutubeVideos(items) {
                     <div class="video-item rutube-video" style="margin-bottom: 30px; padding: 30px; background: linear-gradient(135deg, #34A1F008 0%, #34A1F015 100%); border: 2px solid #34A1F030; border-radius: 24px; text-align: center;">
                         <div style="font-size: 64px; margin-bottom: 20px;">🎬</div>
                         <h3 style="margin: 0 0 15px 0; color: #1A1A1A; font-size: 24px; font-weight: 600;">${videoTitle}</h3>
+                        ${videoAuthor ? `<p style="margin: 0 0 10px 0; color: #34A1F0; font-size: 18px;">${videoAuthor}</p>` : ''}
                         <p style="margin: 0 0 25px 0; color: #666;">Это видео доступно для просмотра только на Rutube</p>
                         <a href="${videoUrl}" target="_blank" 
                            style="display: inline-block; padding: 14px 32px; background: #34A1F0; color: white; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px;">
@@ -946,7 +950,7 @@ function getEmptyStateHTML(tabId) {
     const messages = {
         'music': '🎵 В базе данных нет музыкальных материалов для этой эмоции',
         'video': '🎬 В базе данных нет видео с Rutube для этой эмоции',
-        'images': '🖼️ В базе данных нет изображений для этой эмоции',
+        'images': '🖼️ В базе данных нет фотографий для этой эмоции',
         'exercises': '📖 В базе данных нет упражнений для этой эмоции',
         'articles': '📄 В базе данных нет статей для этой эмоции'
     };
@@ -1075,6 +1079,10 @@ style.textContent = `
     
     .rutube-videos iframe:hover {
         opacity: 0.95;
+    }
+    
+    .images-gallery {
+        animation: fadeIn 0.5s ease-out;
     }
 `;
 document.head.appendChild(style);
