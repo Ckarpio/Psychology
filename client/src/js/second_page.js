@@ -325,8 +325,9 @@ function detectMaterialsStructure(data) {
                     structured[category].push(item);
                 }
             } else {
-                // Определяем по URL (проверяем разные поля)
+                // Определяем по URL или наличию текста
                 const url = item.url || item.изображения || '';
+                const hasText = item.text || item.body || item.content || item.совет || item.упражнение;
                 
                 if (url.includes('rutube.ru')) {
                     structured.video.push(item);
@@ -339,10 +340,16 @@ function detectMaterialsStructure(data) {
                 } else if (url.match(/\.(mp3|wav|ogg)$/i)) {
                     structured.music.push(item);
                 } else if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) || url.includes('i.pinimg.com')) {
-                    // Временно игнорируем изображения
-                    structured.articles.push(item);
-                } else if (url) {
-                    structured.articles.push(item);
+                    structured.images.push(item);
+                } else if (hasText) {
+                    // Если есть текст, определяем по наличию полей
+                    if (item.упражнение || item.instructions || item.body) {
+                        structured.exercises.push(item);
+                    } else if (item.совет || item.article || item.text) {
+                        structured.articles.push(item);
+                    } else {
+                        structured.articles.push(item);
+                    }
                 } else {
                     structured.articles.push(item);
                 }
@@ -485,7 +492,7 @@ function getTitleForTab(tabId) {
         'music': 'Музыка',
         'video': 'Видео',
         'images': 'Фотографии',
-        'exercises': 'Упражнения',
+        'exercises': 'Советы и упражнения',
         'articles': 'Статьи'
     };
     return titles[tabId] || tabId;
@@ -757,21 +764,48 @@ function renderRutubeVideos(items) {
     return html;
 }
 
+/**
+ * Рендеринг советов и упражнений из текста в БД
+ */
 function renderExercises(items) {
     let html = '<div class="exercises-list">';
     
     items.forEach((item) => {
+        // Ищем текст совета или упражнения в разных полях БД
+        const exerciseText = item.упражнение || item.совет || item.text || item.body || item.content || item.instructions || item.description;
+        const title = item.title || item.name || item.заголовок || 'Упражнение';
+        const author = item.author || item.автор || '';
+        
+        if (!exerciseText) {
+            console.warn('Нет текста для упражнения:', item);
+            return;
+        }
+        
         html += `
-            <div class="exercise-item" style="margin-bottom: 20px; padding: 25px; background: white; border: 1px solid #e0e0e0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-                <h3 style="margin: 0 0 10px 0; color: #333; font-size: 24px; font-weight: 600;">${item.title || item.name || 'Упражнение'}</h3>
-                ${item.subtitle ? `<div style="margin: 0 0 10px 0; color: #666; font-weight: 500;">${item.subtitle}</div>` : ''}
-                ${item.description ? `<p style="margin: 0 0 15px 0; color: #555;">${item.description}</p>` : ''}
-                
-                ${item.body || item.instructions || item.text || item.content ? `
-                    <div style="background: #f5f5f5; padding: 20px; border-radius: 12px; margin-top: 15px;">
-                        <pre style="margin: 0; white-space: pre-wrap; font-family: inherit; color: #333; line-height: 1.6;">${item.body || item.instructions || item.text || item.content}</pre>
+            <div class="exercise-item" style="margin-bottom: 25px; padding: 30px; background: white; border: 1px solid #e0e0e0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s ease;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                    <div style="background: #4CAF50; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 24px; color: white;">📝</span>
                     </div>
-                ` : ''}
+                    <div style="flex: 1;">
+                        <h3 style="margin: 0 0 5px 0; color: #333; font-size: 24px; font-weight: 600;">${title}</h3>
+                        ${author ? `<div style="color: #4CAF50; font-size: 16px;">${author}</div>` : ''}
+                    </div>
+                </div>
+                
+                <div style="background: #f9f9f9; padding: 20px; border-radius: 12px; margin-top: 10px; border-left: 4px solid #4CAF50;">
+                    <div style="line-height: 1.8; color: #444; font-size: 16px; white-space: pre-wrap;">
+                        ${exerciseText.split('\n').map(paragraph => 
+                            paragraph.trim() ? `<p style="margin-bottom: 15px;">${paragraph}</p>` : ''
+                        ).join('')}
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <span style="background: #4CAF5020; color: #4CAF50; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
+                        📖 Совет
+                    </span>
+                </div>
             </div>
         `;
     });
@@ -780,27 +814,48 @@ function renderExercises(items) {
     return html;
 }
 
+/**
+ * Рендеринг статей из текста в БД
+ */
 function renderArticles(items) {
     let html = '<div class="articles-list">';
     
     items.forEach((item) => {
-        const content = item.displayContent || item.text || item.body || item.content || item.description;
+        // Ищем текст статьи в разных полях БД
+        const articleText = item.text || item.body || item.content || item.description || item.статья || item.совет;
+        const title = item.title || item.name || item.заголовок || 'Статья';
+        const author = item.author || item.автор || '';
+        
+        if (!articleText) {
+            console.warn('Нет текста для статьи:', item);
+            return;
+        }
         
         html += `
-            <div class="article-item" style="margin-bottom: 25px; padding: 30px; background: white; border: 1px solid #e0e0e0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-                <h3 style="margin: 0 0 15px 0; color: #333; font-size: 28px; font-weight: 700; border-bottom: 2px solid #4CAF50; padding-bottom: 12px;">${item.title || item.name || 'Статья'}</h3>
-                ${item.author ? `<div style="margin: 0 0 15px 0; color: #666; font-style: italic; font-size: 16px;">Автор: ${item.author}</div>` : ''}
+            <div class="article-item" style="margin-bottom: 25px; padding: 30px; background: white; border: 1px solid #e0e0e0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s ease;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                    <div style="background: #2196F3; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 24px; color: white;">📄</span>
+                    </div>
+                    <div style="flex: 1;">
+                        <h3 style="margin: 0 0 5px 0; color: #333; font-size: 26px; font-weight: 700;">${title}</h3>
+                        ${author ? `<div style="color: #2196F3; font-size: 16px;">${author}</div>` : ''}
+                    </div>
+                </div>
                 
-                <div style="line-height: 1.8; color: #444; font-size: 16px;">
-                    ${content ? content.split('\n').map(paragraph => 
-                        paragraph.trim() ? `<p style="margin-bottom: 20px;">${paragraph}</p>` : ''
-                    ).join('') : '<p style="color: #999;">Содержание не доступно</p>'}
+                <div style="background: #ffffff; padding: 20px; border-radius: 12px; margin-top: 10px; border-left: 4px solid #2196F3; line-height: 1.8; color: #444; font-size: 16px; white-space: pre-wrap;">
+                    ${articleText.split('\n').map(paragraph => 
+                        paragraph.trim() ? `<p style="margin-bottom: 15px;">${paragraph}</p>` : ''
+                    ).join('')}
                 </div>
                 
                 ${item.external_url || item.link || item.url ? `
-                    <a href="${item.external_url || item.link || item.url}" target="_blank" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #4CAF50; color: white; text-decoration: none; border-radius: 30px; font-weight: 500;">
-                        Читать полностью →
-                    </a>
+                    <div style="margin-top: 20px; text-align: right;">
+                        <a href="${item.external_url || item.link || item.url}" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: #2196F3; color: white; text-decoration: none; border-radius: 30px; font-weight: 500;">
+                            <span>Читать источник</span>
+                            <span>→</span>
+                        </a>
+                    </div>
                 ` : ''}
             </div>
         `;
@@ -830,7 +885,7 @@ function getEmptyStateHTML(tabId) {
         'music': '🎵 В базе данных нет музыкальных материалов для этой эмоции',
         'video': '🎬 В базе данных нет видео с Rutube для этой эмоции',
         'images': '🖼️ В базе данных нет фотографий для этой эмоции',
-        'exercises': '📖 В базе данных нет упражнений для этой эмоции',
+        'exercises': '📖 В базе данных нет советов и упражнений для этой эмоции',
         'articles': '📄 В базе данных нет статей для этой эмоции'
     };
     
@@ -958,6 +1013,15 @@ style.textContent = `
     
     .rutube-videos iframe:hover {
         opacity: 0.95;
+    }
+    
+    .exercise-item, .article-item {
+        transition: all 0.3s ease;
+    }
+    
+    .exercise-item:hover, .article-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
     }
 `;
 document.head.appendChild(style);
