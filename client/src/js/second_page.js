@@ -1136,3 +1136,80 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+/**
+ * ВРЕМЕННАЯ ОТЛАДОЧНАЯ ФУНКЦИЯ
+ * Покажет, какие данные реально приходят из БД
+ */
+async function renderImages(items) {
+    let html = '<div style="padding: 20px; background: #f0f0f0;">';
+    
+    console.log('🔍 ОТЛАДКА ИЗОБРАЖЕНИЙ:');
+    console.log('Получены данные из БД:', JSON.stringify(items, null, 2));
+    console.log('Количество элементов:', items.length);
+    
+    if (items.length === 0) {
+        return '<p>Нет изображений в БД</p>';
+    }
+    
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        
+        // Проверяем все возможные поля, где может быть ссылка
+        const possibleUrls = [
+            { field: 'изображения', value: item.изображения },
+            { field: 'url', value: item.url },
+            { field: 'src', value: item.src },
+            { field: 'path', value: item.path },
+            { field: 'image_url', value: item.image_url },
+            { field: 'imageUrl', value: item.imageUrl }
+        ];
+        
+        // Находим первый непустой URL
+        let imageUrl = null;
+        let usedField = null;
+        for (const p of possibleUrls) {
+            if (p.value) {
+                imageUrl = p.value;
+                usedField = p.field;
+                break;
+            }
+        }
+        
+        console.log(`\n📌 Элемент ${i + 1}:`);
+        console.log('  Все поля объекта:', Object.keys(item));
+        console.log('  Значение поля "изображения":', item.изображения);
+        console.log('  Используемое поле:', usedField);
+        console.log('  Найденный URL:', imageUrl);
+        
+        html += `
+            <div style="margin-bottom: 30px; padding: 20px; border: 2px solid #333; border-radius: 10px; background: white;">
+                <h3 style="margin-top: 0;">Элемент #${i + 1}</h3>
+                
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                    <p><strong>Поле "изображения":</strong> ${item.изображения || '❌ НЕ НАЙДЕНО'}</p>
+                    <p><strong>Поле "название":</strong> ${item.название || 'Нет'}</p>
+                    <p><strong>Поле "описание":</strong> ${item.описание || 'Нет'}</p>
+                    <p><strong>Поле "автор":</strong> ${item.автор || 'Нет'}</p>
+                </div>
+                
+                <p><strong>URL для загрузки:</strong> ${imageUrl || '❌ НЕТ URL'}</p>
+                
+                ${imageUrl ? `
+                    <div style="margin-top: 15px;">
+                        <p><strong>Попытка загрузить изображение:</strong></p>
+                        <img src="${imageUrl}" 
+                             style="max-width: 300px; max-height: 200px; border: 3px solid #4CAF50;"
+                             onload="console.log('✅ Изображение ${i + 1} загружено'); this.style.border='3px solid green';"
+                             onerror="console.error('❌ Ошибка загрузки изображения ${i + 1}'); this.style.border='3px solid red'; this.parentElement.innerHTML+='<p style=\'color:red;\'>Ошибка загрузки!</p>'; this.style.display='none';">
+                        
+                        <p><a href="${imageUrl}" target="_blank" style="display: inline-block; margin-top: 10px; padding: 8px 16px; background: #2196F3; color: white; text-decoration: none; border-radius: 4px;">🔗 Открыть ссылку напрямую</a></p>
+                    </div>
+                ` : '<p style="color:red;">Нет ссылки для загрузки</p>'}
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    return html;
+}
