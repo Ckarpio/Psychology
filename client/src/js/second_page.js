@@ -38,86 +38,61 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 /**
- * Функция для VK Музыки - извлекает информацию из разных форматов ссылок
+ * Функция для определения типа ссылки VK
  */
-function extractVKMusicInfo(url) {
+function getVKLinkInfo(url) {
     if (!url) return null;
-    
-    console.log('Обрабатываем ссылку VK Музыки:', url);
     
     // Проверяем, что это ссылка VK
     if (!url.includes('vk.com') && !url.includes('vk.ru')) {
         return null;
     }
     
-    // Паттерны для разных типов ссылок VK
-    const patterns = [
-        // audio-20012345_12345678
-        { regex: /audio(-?\d+_\d+)/, type: 'audio' },
-        // album/-20012345_12345678
-        { regex: /album(-?\d+_\d+)/, type: 'album' },
-        // playlist/-20012345_12345678
-        { regex: /playlist(-?\d+_\d+)/, type: 'playlist' },
-        // audio?q=название
-        { regex: /audio\?q=([^&]+)/, type: 'search' },
-        // music?section=playlists
-        { regex: /music\?section=([^&]+)/, type: 'section' }
-    ];
-    
-    for (const pattern of patterns) {
-        const match = url.match(pattern.regex);
-        if (match) {
-            console.log('Найдено совпадение в VK:', pattern.type, match);
-            
-            switch(pattern.type) {
-                case 'audio':
-                    return {
-                        type: 'track',
-                        id: match[1],
-                        embedUrl: null, // VK не дает embed для отдельных треков
-                        directUrl: url,
-                        isTrack: true
-                    };
-                case 'album':
-                    return {
-                        type: 'album',
-                        id: match[1],
-                        embedUrl: `https://vk.com/music/album/${match[1]}`,
-                        directUrl: url
-                    };
-                case 'playlist':
-                    return {
-                        type: 'playlist',
-                        id: match[1],
-                        embedUrl: `https://vk.com/music/playlist/${match[1]}`,
-                        directUrl: url
-                    };
-                default:
-                    return {
-                        type: pattern.type,
-                        id: match[1],
-                        embedUrl: null,
-                        directUrl: url
-                    };
-            }
+    // Определяем тип контента
+    if (url.includes('/music') || url.includes('/audio')) {
+        if (url.includes('/playlist')) {
+            return {
+                type: 'playlist',
+                icon: '📀',
+                title: 'Плейлист в VK Музыке',
+                color: '#0077FF'
+            };
+        } else if (url.includes('/album')) {
+            return {
+                type: 'album',
+                icon: '💿',
+                title: 'Альбом в VK Музыке',
+                color: '#0077FF'
+            };
+        } else if (url.includes('/artist')) {
+            return {
+                type: 'artist',
+                icon: '👤',
+                title: 'Артист в VK Музыке',
+                color: '#0077FF'
+            };
+        } else {
+            return {
+                type: 'track',
+                icon: '🎵',
+                title: 'Трек в VK Музыке',
+                color: '#0077FF'
+            };
         }
-    }
-    
-    // Если это страница музыки VK
-    if (url.includes('vk.com/music')) {
+    } else if (url.includes('/video')) {
         return {
-            type: 'music_page',
-            id: null,
-            embedUrl: null,
-            directUrl: url
+            type: 'video',
+            icon: '🎬',
+            title: 'Видео в VK',
+            color: '#0077FF'
         };
     }
     
     return {
-        type: 'unknown',
-        id: null,
-        embedUrl: null,
-        directUrl: url
+        type: 'vk',
+        icon: '🔗',
+        title: 'Ссылка VK',
+        color: '#0077FF'
     };
 }
 
@@ -380,7 +355,7 @@ function renderImages(items) {
 }
 
 /**
- * Рендеринг музыки с поддержкой VK
+ * Рендеринг музыки с красивыми ссылками на VK
  */
 function renderMusic(items) {
     let html = '<div class="music-list">';
@@ -397,47 +372,78 @@ function renderMusic(items) {
         // Проверяем, является ли ссылка VK
         const isVK = audioUrl.includes('vk.com') || audioUrl.includes('vk.ru');
         
-        // Для VK ссылок
+        // Для VK ссылок - красивая карточка с кнопкой перехода
         if (isVK) {
-            const vkInfo = extractVKMusicInfo(audioUrl);
+            const vkInfo = getVKLinkInfo(audioUrl);
             
             html += `
-                <div class="music-item vk-music" style="margin-bottom: 20px; padding: 25px; background: linear-gradient(135deg, #0077FF10 0%, #0077FF20 100%); border: 1px solid #0077FF30; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                    <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
-                        <div style="font-size: 56px; background: #0077FF20; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
-                            <img src="https://vk.com/images/icons/favicons/favicon-32x32.png" style="width: 40px; height: 40px;" onerror="this.style.display='none'; this.parentElement.innerHTML='🎵'">
+                <div class="music-item vk-music" style="margin-bottom: 25px; padding: 30px; background: linear-gradient(135deg, #0077FF08 0%, #0077FF15 100%); border: 1px solid #0077FF30; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,119,255,0.1);">
+                    <div style="display: flex; align-items: center; gap: 25px; flex-wrap: wrap;">
+                        <!-- VK Иконка -->
+                        <div style="background: #0077FF; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 20px rgba(0,119,255,0.3);">
+                            <span style="font-size: 40px; color: white;">${vkInfo?.icon || '🎵'}</span>
                         </div>
-                        <div style="flex: 1; min-width: 200px;">
-                            <h3 style="margin: 0 0 8px 0; color: #333; font-size: 20px; font-weight: 600;">${item.title || 'Трек в VK Музыке'}</h3>
-                            ${item.artist || item.author ? `<div style="margin: 0 0 12px 0; color: #0077FF; font-size: 16px; font-weight: 500;">${item.artist || item.author}</div>` : ''}
-                            ${item.description ? `<p style="margin: 0 0 15px 0; color: #666; line-height: 1.5;">${item.description}</p>` : ''}
-                            
-                            <div style="background: #f5f5f5; padding: 15px; border-radius: 30px; margin: 15px 0; text-align: center;">
-                                <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
-                                    ⚠️ VK Музыку можно слушать только в официальном приложении или на сайте VK
-                                </p>
-                                <audio controls style="width: 100%; opacity: 0.5;" disabled>
-                                    <source src="#" type="audio/mpeg">
-                                </audio>
-                            </div>
-                            
-                            <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; justify-content: center;">
-                                <span style="background: #0077FF; color: white; padding: 6px 15px; border-radius: 30px; font-size: 14px; font-weight: 500;">
-                                    🎵 VK Музыка
+                        
+                        <!-- Информация о треке -->
+                        <div style="flex: 1; min-width: 250px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <span style="background: #0077FF20; color: #0077FF; padding: 5px 15px; border-radius: 30px; font-size: 14px; font-weight: 500;">
+                                    VK Музыка
                                 </span>
-                                <a href="${audioUrl}" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 30px; background: #0077FF; color: white; text-decoration: none; border-radius: 30px; font-weight: 500; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 10px #0077FF40;" 
-                                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 15px #0077FF60'"
-                                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px #0077FF40'">
-                                    <span>Слушать в VK</span>
-                                    <span style="font-size: 18px;">→</span>
-                                </a>
+                                <span style="color: #999; font-size: 14px;">
+                                    ${vkInfo?.type === 'playlist' ? 'Плейлист' : 
+                                      vkInfo?.type === 'album' ? 'Альбом' : 
+                                      vkInfo?.type === 'artist' ? 'Артист' : 'Трек'}
+                                </span>
                             </div>
                             
-                            ${vkInfo && vkInfo.type === 'playlist' ? `
-                                <p style="margin-top: 15px; font-size: 13px; color: #999; text-align: center;">
-                                    Это плейлист. Чтобы послушать, откройте его в VK
+                            <h3 style="margin: 0 0 8px 0; color: #1A1A1A; font-size: 24px; font-weight: 600; line-height: 1.3;">
+                                ${item.title || 'Название трека'}
+                            </h3>
+                            
+                            ${item.artist || item.author ? `
+                                <div style="margin: 0 0 15px 0; color: #0077FF; font-size: 18px; font-weight: 500;">
+                                    ${item.artist || item.author}
+                                </div>
+                            ` : ''}
+                            
+                            ${item.description ? `
+                                <p style="margin: 0 0 20px 0; color: #666; line-height: 1.6; font-size: 15px; border-left: 3px solid #0077FF; padding-left: 15px;">
+                                    ${item.description}
                                 </p>
                             ` : ''}
+                            
+                            <!-- Кнопка перехода в VK -->
+                            <a href="${audioUrl}" target="_blank" 
+                               style="display: inline-flex; align-items: center; justify-content: center; gap: 12px; 
+                                      background: #0077FF; 
+                                      color: white; 
+                                      text-decoration: none; 
+                                      padding: 16px 32px; 
+                                      border-radius: 50px; 
+                                      font-weight: 600; 
+                                      font-size: 16px;
+                                      letter-spacing: 0.5px;
+                                      transition: all 0.3s ease;
+                                      box-shadow: 0 8px 20px rgba(0,119,255,0.3);
+                                      border: 1px solid rgba(255,255,255,0.2);
+                                      width: fit-content;"
+                               onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 15px 30px rgba(0,119,255,0.4)'; this.style.background='#0066DD';"
+                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(0,119,255,0.3)'; this.style.background='#0077FF';">
+                                <span style="font-size: 24px;">🎧</span>
+                                <span>Слушать в VK Музыке</span>
+                                <span style="font-size: 20px;">→</span>
+                            </a>
+                            
+                            <!-- Дополнительная информация -->
+                            <div style="margin-top: 20px; display: flex; gap: 15px; flex-wrap: wrap;">
+                                <span style="color: #999; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+                                    <span style="color: #0077FF;">●</span> Требуется авторизация VK
+                                </span>
+                                <span style="color: #999; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+                                    <span style="color: #0077FF;">●</span> Доступно в приложении VK
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -447,14 +453,12 @@ function renderMusic(items) {
         else if (audioUrl.match(/\.(mp3|wav|ogg|m4a)$/i)) {
             const fullAudioUrl = audioUrl.startsWith('http') ? audioUrl : `${API_URL}${audioUrl}`;
             html += `
-                <div class="music-item" style="margin-bottom: 20px; padding: 20px; background: white; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                    <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-                        <div style="font-size: 40px; background: #4CAF5020; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">🎵</div>
+                <div class="music-item" style="margin-bottom: 20px; padding: 25px; background: white; border: 1px solid #e0e0e0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                        <div style="font-size: 48px; background: #4CAF5020; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">🎵</div>
                         <div style="flex: 1; min-width: 250px;">
-                            <h3 style="margin: 0 0 5px 0; color: #333; font-size: 18px;">${item.title || item.name || 'Аудиозапись'}</h3>
-                            ${item.artist || item.author ? `<div style="margin: 0 0 10px 0; color: #666; font-size: 14px;">${item.artist || item.author}</div>` : ''}
-                            ${item.description ? `<p style="margin: 0 0 15px 0; color: #555; line-height: 1.5;">${item.description}</p>` : ''}
-                            
+                            <h3 style="margin: 0 0 8px 0; color: #333; font-size: 20px;">${item.title || item.name || 'Аудиозапись'}</h3>
+                            ${item.artist || item.author ? `<div style="margin: 0 0 12px 0; color: #4CAF50; font-size: 16px;">${item.artist || item.author}</div>` : ''}
                             <audio controls style="width: 100%; margin-top: 10px;">
                                 <source src="${fullAudioUrl}" type="audio/mpeg">
                                 Ваш браузер не поддерживает аудио элемент.
@@ -467,14 +471,14 @@ function renderMusic(items) {
         // Для других внешних ссылок
         else {
             html += `
-                <div class="music-item external-service" style="margin-bottom: 20px; padding: 20px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 12px;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div style="font-size: 40px;">🔗</div>
+                <div class="music-item external-service" style="margin-bottom: 20px; padding: 25px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 16px;">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div style="font-size: 48px;">🔗</div>
                         <div style="flex: 1;">
-                            <h3 style="margin: 0 0 5px 0;">${item.title || 'Внешний ресурс'}</h3>
-                            ${item.description ? `<p style="margin: 0 0 10px 0; color: #666;">${item.description}</p>` : ''}
-                            <a href="${audioUrl}" target="_blank" style="display: inline-block; padding: 8px 16px; background: #2196F3; color: white; text-decoration: none; border-radius: 4px;">
-                                Перейти к источнику
+                            <h3 style="margin: 0 0 8px 0; color: #333; font-size: 20px;">${item.title || 'Внешний ресурс'}</h3>
+                            ${item.description ? `<p style="margin: 0 0 15px 0; color: #666;">${item.description}</p>` : ''}
+                            <a href="${audioUrl}" target="_blank" style="display: inline-block; padding: 12px 24px; background: #6c757d; color: white; text-decoration: none; border-radius: 30px; font-weight: 500;">
+                                Перейти к источнику →
                             </a>
                         </div>
                     </div>
@@ -499,30 +503,36 @@ function renderVideo(items) {
         // Проверяем, является ли ссылка VK видео
         const isVKVideo = videoUrl && (videoUrl.includes('vk.com/video') || videoUrl.includes('vk.ru/video'));
         
-        html += `
-            <div class="video-item" style="margin-bottom: 30px; padding: 20px; background: white; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                <h3 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">${item.title || item.name || 'Видео'}</h3>
-                ${item.description ? `<p style="margin: 0 0 15px 0; color: #666;">${item.description}</p>` : ''}
-                
-                ${isVKVideo ? `
-                    <div style="padding: 40px; text-align: center; background: #f5f5f5; border-radius: 8px;">
-                        <img src="https://vk.com/images/icons/favicons/favicon-32x32.png" style="width: 48px; height: 48px; margin-bottom: 15px;">
-                        <p style="margin-bottom: 20px;">Это видео доступно для просмотра только на VK</p>
-                        <a href="${videoUrl}" target="_blank" style="display: inline-block; padding: 10px 20px; background: #0077FF; color: white; text-decoration: none; border-radius: 6px;">
-                            Смотреть на VK →
-                        </a>
+        if (isVKVideo) {
+            html += `
+                <div class="video-item" style="margin-bottom: 25px; padding: 30px; background: linear-gradient(135deg, #0077FF08 0%, #0077FF15 100%); border: 1px solid #0077FF30; border-radius: 24px;">
+                    <div style="display: flex; align-items: center; gap: 25px; flex-wrap: wrap;">
+                        <div style="background: #0077FF; width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 35px; color: white;">🎬</span>
+                        </div>
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 8px 0; color: #333; font-size: 22px;">${item.title || item.name || 'Видео в VK'}</h3>
+                            ${item.description ? `<p style="margin: 0 0 20px 0; color: #666;">${item.description}</p>` : ''}
+                            <a href="${videoUrl}" target="_blank" 
+                               style="display: inline-flex; align-items: center; gap: 10px; background: #0077FF; color: white; text-decoration: none; padding: 14px 28px; border-radius: 50px; font-weight: 500;">
+                                <span>Смотреть в VK</span>
+                                <span>→</span>
+                            </a>
+                        </div>
                     </div>
-                ` : videoUrl ? `
-                    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; margin-bottom: 10px;">
-                        <iframe 
-                            src="${videoUrl}" 
-                            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
-                            allowfullscreen>
-                        </iframe>
+                </div>
+            `;
+        } else if (videoUrl) {
+            html += `
+                <div class="video-item" style="margin-bottom: 30px; padding: 20px; background: white; border: 1px solid #e0e0e0; border-radius: 12px;">
+                    <h3 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">${item.title || item.name || 'Видео'}</h3>
+                    ${item.description ? `<p style="margin: 0 0 15px 0; color: #666;">${item.description}</p>` : ''}
+                    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px;">
+                        <iframe src="${videoUrl}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allowfullscreen></iframe>
                     </div>
-                ` : ''}
-            </div>
-        `;
+                </div>
+            `;
+        }
     });
     
     html += '</div>';
@@ -534,14 +544,14 @@ function renderExercises(items) {
     
     items.forEach((item) => {
         html += `
-            <div class="exercise-item" style="margin-bottom: 20px; padding: 20px; background: white; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                <h3 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">${item.title || item.name || 'Упражнение'}</h3>
+            <div class="exercise-item" style="margin-bottom: 20px; padding: 25px; background: white; border: 1px solid #e0e0e0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <h3 style="margin: 0 0 10px 0; color: #333; font-size: 20px;">${item.title || item.name || 'Упражнение'}</h3>
                 ${item.subtitle ? `<div style="margin: 0 0 10px 0; color: #666; font-weight: 500;">${item.subtitle}</div>` : ''}
                 ${item.description ? `<p style="margin: 0 0 15px 0; color: #555;">${item.description}</p>` : ''}
                 
                 ${item.body || item.instructions || item.text || item.content ? `
-                    <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-top: 10px;">
-                        <pre style="margin: 0; white-space: pre-wrap; font-family: inherit; color: #333;">${item.body || item.instructions || item.text || item.content}</pre>
+                    <div style="background: #f5f5f5; padding: 20px; border-radius: 12px; margin-top: 15px;">
+                        <pre style="margin: 0; white-space: pre-wrap; font-family: inherit; color: #333; line-height: 1.6;">${item.body || item.instructions || item.text || item.content}</pre>
                     </div>
                 ` : ''}
             </div>
@@ -559,18 +569,20 @@ function renderArticles(items) {
         const content = item.displayContent || item.text || item.body || item.content || item.description;
         
         html += `
-            <div class="article-item" style="margin-bottom: 25px; padding: 25px; background: white; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                <h3 style="margin: 0 0 10px 0; color: #333; font-size: 20px; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">${item.title || item.name || 'Статья'}</h3>
-                ${item.author ? `<div style="margin: 0 0 10px 0; color: #666; font-style: italic;">Автор: ${item.author}</div>` : ''}
+            <div class="article-item" style="margin-bottom: 25px; padding: 30px; background: white; border: 1px solid #e0e0e0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <h3 style="margin: 0 0 15px 0; color: #333; font-size: 24px; border-bottom: 2px solid #4CAF50; padding-bottom: 12px;">${item.title || item.name || 'Статья'}</h3>
+                ${item.author ? `<div style="margin: 0 0 15px 0; color: #666; font-style: italic;">Автор: ${item.author}</div>` : ''}
                 
-                <div style="line-height: 1.6; color: #444;">
+                <div style="line-height: 1.8; color: #444; font-size: 16px;">
                     ${content ? content.split('\n').map(paragraph => 
-                        paragraph.trim() ? `<p style="margin-bottom: 15px;">${paragraph}</p>` : ''
+                        paragraph.trim() ? `<p style="margin-bottom: 20px;">${paragraph}</p>` : ''
                     ).join('') : '<p style="color: #999;">Содержание не доступно</p>'}
                 </div>
                 
                 ${item.external_url || item.link || item.url ? `
-                    <a href="${item.external_url || item.link || item.url}" target="_blank" style="display: inline-block; margin-top: 15px; padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">Читать полностью →</a>
+                    <a href="${item.external_url || item.link || item.url}" target="_blank" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #4CAF50; color: white; text-decoration: none; border-radius: 30px; font-weight: 500;">
+                        Читать полностью →
+                    </a>
                 ` : ''}
             </div>
         `;
@@ -585,8 +597,8 @@ function renderDefault(items) {
     
     items.forEach((item) => {
         html += `
-            <div class="default-item" style="margin-bottom: 15px; padding: 15px; background: white; border: 1px solid #e0e0e0; border-radius: 8px;">
-                <pre style="margin: 0; white-space: pre-wrap;">${JSON.stringify(item, null, 2)}</pre>
+            <div class="default-item" style="margin-bottom: 15px; padding: 20px; background: white; border: 1px solid #e0e0e0; border-radius: 8px;">
+                <pre style="margin: 0; white-space: pre-wrap; font-size: 14px;">${JSON.stringify(item, null, 2)}</pre>
             </div>
         `;
     });
@@ -605,9 +617,9 @@ function getEmptyStateHTML(tabId) {
     };
     
     return `
-        <div style="padding: 60px 20px; text-align: center; background: #f9f9f9; border-radius: 12px; color: #999;">
-            <p style="font-size: 64px; margin: 0 0 20px 0;">${getIconForTab(tabId)}</p>
-            <p style="font-size: 18px; font-style: italic; margin: 0;">${messages[tabId] || 'Нет доступных материалов в базе данных'}</p>
+        <div style="padding: 80px 20px; text-align: center; background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%); border-radius: 24px; color: #999;">
+            <p style="font-size: 80px; margin: 0 0 25px 0; opacity: 0.5;">${getIconForTab(tabId)}</p>
+            <p style="font-size: 18px; font-style: italic; margin: 0; color: #666;">${messages[tabId] || 'Нет доступных материалов в базе данных'}</p>
         </div>
     `;
 }
@@ -633,7 +645,7 @@ function displayError(message) {
     if (container) {
         const backButton = document.createElement('button');
         backButton.textContent = '← Вернуться на главную';
-        backButton.style.cssText = 'margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;';
+        backButton.style.cssText = 'margin-top: 20px; padding: 12px 24px; background: #4CAF50; color: white; border: none; border-radius: 30px; cursor: pointer; font-size: 16px; font-weight: 500;';
         backButton.onclick = () => window.location.href = 'index.html';
         container.appendChild(backButton);
     }
@@ -642,41 +654,38 @@ function displayError(message) {
 // Добавляем CSS
 const style = document.createElement('style');
 style.textContent = `
-    .image-item:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 15px rgba(0,0,0,0.15);
-    }
-    
-    .music-item:hover, .exercise-item:hover, .article-item:hover, .video-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    .image-item:hover, .music-item:hover, .video-item:hover, .exercise-item:hover, .article-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+        transition: all 0.3s ease;
     }
     
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
+        from { opacity: 0; transform: translateY(15px); }
         to { opacity: 1; transform: translateY(0); }
     }
     
     .tab-content-container {
-        animation: fadeIn 0.3s ease-out;
+        animation: fadeIn 0.4s ease-out;
+    }
+    
+    .vk-music {
+        transition: all 0.3s ease;
+    }
+    
+    .vk-music:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 35px rgba(0,119,255,0.15) !important;
     }
     
     audio {
         width: 100%;
-        border-radius: 30px;
+        border-radius: 40px;
+        height: 50px;
     }
     
     audio::-webkit-media-controls-panel {
         background-color: #f0f0f0;
-    }
-    
-    audio[disabled] {
-        background: #f0f0f0;
-        cursor: not-allowed;
-    }
-    
-    .vk-music {
-        transition: transform 0.3s, box-shadow 0.3s;
     }
 `;
 document.head.appendChild(style);
