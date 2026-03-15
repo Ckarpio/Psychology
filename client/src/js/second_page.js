@@ -1,3 +1,4 @@
+
 // import { API_URL } from "./const/const.js";
 
 // // Глобальная переменная для хранения материалов
@@ -31,11 +32,66 @@
 //         await loadRecommendationsFromDB(emotionCode);
 //         initTabs();
         
+//         // Добавляем кнопку возврата после загрузки контента
+//         addBackButton();
+        
 //     } catch (error) {
 //         console.error('Ошибка:', error);
 //         displayError('Ошибка загрузки данных с сервера');
 //     }
 // });
+
+// /**
+//  * Функция для добавления кнопки возврата на главную
+//  */
+// function addBackButton() {
+//     const container = document.querySelector('.container');
+//     if (!container) return;
+    
+//     // Проверяем, есть ли уже кнопка
+//     if (document.querySelector('.back-to-main')) return;
+    
+//     const backButton = document.createElement('button');
+//     backButton.className = 'back-to-main';
+//     backButton.innerHTML = `
+//         <span style="font-size: 20px;">←</span>
+//         <span>Вернуться на главную</span>
+//     `;
+//     backButton.style.cssText = `
+//         display: inline-flex;
+//         align-items: center;
+//         gap: 10px;
+//         margin: 30px 0 20px 0;
+//         padding: 12px 28px;
+//         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+//         color: white;
+//         border: none;
+//         border-radius: 50px;
+//         font-size: 16px;
+//         font-weight: 600;
+//         cursor: pointer;
+//         transition: all 0.3s ease;
+//         box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+//         border: 1px solid rgba(255,255,255,0.2);
+//     `;
+    
+//     // Добавляем эффекты при наведении
+//     backButton.addEventListener('mouseover', () => {
+//         backButton.style.transform = 'translateY(-3px)';
+//         backButton.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.5)';
+//     });
+    
+//     backButton.addEventListener('mouseout', () => {
+//         backButton.style.transform = 'translateY(0)';
+//         backButton.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+//     });
+    
+//     backButton.addEventListener('click', () => {
+//         window.location.href = 'index.html';
+//     });
+    
+//     container.appendChild(backButton);
+// }
 
 // /**
 //  * Функция для извлечения информации из ссылки VK
@@ -98,7 +154,6 @@
 //         const urlObj = new URL(url);
 //         const qParam = urlObj.searchParams.get('q');
 //         if (qParam) {
-//             // Если есть поисковый запрос, используем его
 //             trackInfo.title = qParam;
 //             trackInfo.artist = 'Поиск VK';
 //         }
@@ -487,8 +542,7 @@
 //                                     ${artist}
 //                                 </div>
 //                             ` : ''}
-                            
-                            
+                          
                             
 //                             <!-- Кнопка перехода в VK -->
 //                             <a href="${audioUrl}" target="_blank" 
@@ -728,9 +782,42 @@
 //     const container = document.querySelector('.container');
 //     if (container) {
 //         const backButton = document.createElement('button');
-//         backButton.textContent = '← Вернуться на главную';
-//         backButton.style.cssText = 'margin-top: 20px; padding: 12px 24px; background: #4CAF50; color: white; border: none; border-radius: 30px; cursor: pointer; font-size: 16px; font-weight: 500;';
-//         backButton.onclick = () => window.location.href = 'index.html';
+//         backButton.className = 'back-to-main';
+//         backButton.innerHTML = `
+//             <span style="font-size: 20px;">←</span>
+//             <span>Вернуться на главную</span>
+//         `;
+//         backButton.style.cssText = `
+//             display: inline-flex;
+//             align-items: center;
+//             gap: 10px;
+//             margin: 30px 0 20px 0;
+//             padding: 12px 28px;
+//             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+//             color: white;
+//             border: none;
+//             border-radius: 50px;
+//             font-size: 16px;
+//             font-weight: 600;
+//             cursor: pointer;
+//             transition: all 0.3s ease;
+//             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+//         `;
+        
+//         backButton.addEventListener('mouseover', () => {
+//             backButton.style.transform = 'translateY(-3px)';
+//             backButton.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.5)';
+//         });
+        
+//         backButton.addEventListener('mouseout', () => {
+//             backButton.style.transform = 'translateY(0)';
+//             backButton.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+//         });
+        
+//         backButton.addEventListener('click', () => {
+//             window.location.href = 'index.html';
+//         });
+        
 //         container.appendChild(backButton);
 //     }
 // }
@@ -771,8 +858,13 @@
 //     audio::-webkit-media-controls-panel {
 //         background-color: #f0f0f0;
 //     }
+    
+//     .back-to-main {
+//         animation: fadeIn 0.5s ease-out;
+//     }
 // `;
 // document.head.appendChild(style);
+
 
 
 import { API_URL } from "./const/const.js";
@@ -1000,6 +1092,127 @@ function getVKLinkInfo(url) {
 }
 
 /**
+ * Функция для получения embed URL Rutube
+ * @param {string} url - оригинальная ссылка на видео Rutube
+ * @returns {string|null} embed ссылка для встраивания
+ */
+function getRutubeEmbedUrl(url) {
+    if (!url || !url.includes('rutube.ru')) return null;
+    
+    // Паттерны для разных форматов ссылок Rutube
+    const patterns = [
+        // video/8c350a831242aea13307af9ce3175aba/
+        { regex: /video\/([a-zA-Z0-9]+)/, type: 'video' },
+        // play/embed/8c350a831242aea13307af9ce3175aba
+        { regex: /embed\/([a-zA-Z0-9]+)/, type: 'embed' },
+        // ?v=8c350a831242aea13307af9ce3175aba
+        { regex: /[?&]v=([a-zA-Z0-9]+)/, type: 'param' }
+    ];
+    
+    for (const pattern of patterns) {
+        const match = url.match(pattern.regex);
+        if (match) {
+            const videoId = match[1];
+            return {
+                embedUrl: `https://rutube.ru/play/embed/${videoId}`,
+                videoId: videoId,
+                type: 'rutube',
+                name: 'Rutube',
+                color: '#34A1F0',
+                icon: '🎬'
+            };
+        }
+    }
+    
+    // Если не нашли по паттернам, но это Rutube
+    if (url.includes('rutube.ru')) {
+        return {
+            embedUrl: null,
+            videoId: null,
+            type: 'rutube',
+            name: 'Rutube',
+            color: '#34A1F0',
+            icon: '🎬'
+        };
+    }
+    
+    return null;
+}
+
+/**
+ * Функция для определения типа видео по ссылке
+ */
+function getVideoInfo(url) {
+    if (!url) return null;
+    
+    // Проверяем Rutube
+    if (url.includes('rutube.ru')) {
+        const rutubeInfo = getRutubeEmbedUrl(url);
+        if (rutubeInfo) {
+            return {
+                platform: 'rutube',
+                embedUrl: rutubeInfo.embedUrl,
+                name: 'Rutube',
+                color: '#34A1F0',
+                icon: '🎬',
+                canEmbed: !!rutubeInfo.embedUrl
+            };
+        }
+    }
+    
+    // Проверяем YouTube
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
+        if (match) {
+            return {
+                platform: 'youtube',
+                embedUrl: `https://www.youtube.com/embed/${match[1]}`,
+                name: 'YouTube',
+                color: '#FF0000',
+                icon: '▶️',
+                canEmbed: true
+            };
+        }
+    }
+    
+    // Проверяем Vimeo
+    if (url.includes('vimeo.com')) {
+        const match = url.match(/vimeo\.com\/(\d+)/);
+        if (match) {
+            return {
+                platform: 'vimeo',
+                embedUrl: `https://player.vimeo.com/video/${match[1]}`,
+                name: 'Vimeo',
+                color: '#1AB7EA',
+                icon: '🎥',
+                canEmbed: true
+            };
+        }
+    }
+    
+    // Проверяем VK видео
+    if (url.includes('vk.com/video') || url.includes('vk.ru/video')) {
+        return {
+            platform: 'vk',
+            embedUrl: null,
+            name: 'VK Видео',
+            color: '#0077FF',
+            icon: '📺',
+            canEmbed: false
+        };
+    }
+    
+    return {
+        platform: 'unknown',
+        embedUrl: null,
+        name: 'видеохостинге',
+        color: '#666',
+        icon: '🔗',
+        canEmbed: false
+    };
+}
+
+/**
  * Загрузка рекомендаций из базы данных
  */
 async function loadRecommendationsFromDB(emotionCode) {
@@ -1061,6 +1274,8 @@ function detectMaterialsStructure(data) {
                     } else {
                         structured.music.push(item);
                     }
+                } else if (item.url && item.url.includes('rutube.ru')) {
+                    structured.video.push(item);
                 } else if (item.url && item.url.match(/\.(mp3|wav|ogg)$/i)) {
                     structured.music.push(item);
                 } else if (item.url && item.url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
@@ -1318,11 +1533,7 @@ function renderMusic(items) {
                                     ${artist}
                                 </div>
                             ` : ''}
-                            
-                            <!-- Ссылка для копирования (показываем ID если есть) -->
-                            <div style="margin: 0 0 15px 0; padding: 10px; background: #f5f5f5; border-radius: 8px; font-family: monospace; font-size: 12px; color: #666; word-break: break-all;">
-                                🔗 ${audioUrl}
-                            </div>
+                          
                             
                             <!-- Кнопка перехода в VK -->
                             <a href="${audioUrl}" target="_blank" 
@@ -1404,7 +1615,7 @@ function renderMusic(items) {
 }
 
 /**
- * Рендеринг видео
+ * Рендеринг видео с поддержкой Rutube и других платформ
  */
 function renderVideo(items) {
     let html = '<div class="video-list">';
@@ -1412,19 +1623,86 @@ function renderVideo(items) {
     items.forEach((item) => {
         const videoUrl = item.url || item.video_url || item.videoUrl || item.embed_url || item.embedUrl;
         
+        if (!videoUrl) {
+            console.warn('Нет URL для видео элемента:', item);
+            return;
+        }
+        
         // Получаем название видео и автора
         const videoTitle = item.title || item.name || 'Видео';
         const videoAuthor = item.author || item.artist || item.channel || '';
         
-        // Проверяем, является ли ссылка VK видео
-        const isVKVideo = videoUrl && (videoUrl.includes('vk.com/video') || videoUrl.includes('vk.ru/video'));
+        // Получаем информацию о видео
+        const videoInfo = getVideoInfo(videoUrl);
         
-        if (isVKVideo) {
+        // Для Rutube (можно встраивать)
+        if (videoInfo.platform === 'rutube' && videoInfo.canEmbed) {
+            html += `
+                <div class="video-item rutube-video" style="margin-bottom: 30px; padding: 25px; background: linear-gradient(135deg, #34A1F008 0%, #34A1F015 100%); border: 1px solid #34A1F030; border-radius: 24px; box-shadow: 0 10px 25px rgba(52,161,240,0.1);">
+                    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                        <div style="background: #34A1F0; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 30px; color: white;">🎬</span>
+                        </div>
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 5px 0; color: #333; font-size: 24px; font-weight: 600;">${videoTitle}</h3>
+                            ${videoAuthor ? `<div style="margin: 0 0 5px 0; color: #34A1F0; font-size: 18px;">${videoAuthor}</div>` : ''}
+                            ${item.description ? `<p style="margin: 0; color: #666;">${item.description}</p>` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Rutube плеер -->
+                    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 16px; margin-bottom: 15px; background: #000; box-shadow: 0 8px 20px rgba(52,161,240,0.3);">
+                        <iframe 
+                            src="${videoInfo.embedUrl}" 
+                            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <span style="background: #34A1F020; color: #34A1F0; padding: 5px 15px; border-radius: 30px; font-size: 13px; font-weight: 500;">
+                            🎬 Видео с Rutube
+                        </span>
+                        <a href="${videoUrl}" target="_blank" style="color: #34A1F0; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;">
+                            <span>Открыть оригинал</span>
+                            <span>→</span>
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+        // Для YouTube и Vimeo (можно встраивать)
+        else if (videoInfo.canEmbed) {
+            html += `
+                <div class="video-item" style="margin-bottom: 30px; padding: 20px; background: white; border: 1px solid #e0e0e0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <h3 style="margin: 0 0 8px 0; color: #333; font-size: 22px; font-weight: 600;">${videoTitle}</h3>
+                    ${videoAuthor ? `<div style="margin: 0 0 15px 0; color: #666; font-size: 16px;">${videoAuthor}</div>` : ''}
+                    ${item.description ? `<p style="margin: 0 0 15px 0; color: #666;">${item.description}</p>` : ''}
+                    
+                    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; margin-bottom: 10px;">
+                        <iframe src="${videoInfo.embedUrl}" 
+                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" 
+                                allowfullscreen>
+                        </iframe>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: flex-end;">
+                        <a href="${videoUrl}" target="_blank" style="color: ${videoInfo.color}; text-decoration: none; font-size: 14px;">
+                            Открыть на ${videoInfo.name} →
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+        // Для VK видео и других (не встраивается)
+        else if (videoInfo.platform === 'vk') {
             html += `
                 <div class="video-item" style="margin-bottom: 25px; padding: 30px; background: linear-gradient(135deg, #0077FF08 0%, #0077FF15 100%); border: 1px solid #0077FF30; border-radius: 24px;">
                     <div style="display: flex; align-items: center; gap: 25px; flex-wrap: wrap;">
                         <div style="background: #0077FF; width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                            <span style="font-size: 35px; color: white;">🎬</span>
+                            <span style="font-size: 35px; color: white;">📺</span>
                         </div>
                         <div style="flex: 1;">
                             <h3 style="margin: 0 0 8px 0; color: #333; font-size: 24px; font-weight: 600;">${videoTitle}</h3>
@@ -1439,14 +1717,21 @@ function renderVideo(items) {
                     </div>
                 </div>
             `;
-        } else if (videoUrl) {
+        }
+        // Для неподдерживаемых платформ
+        else {
             html += `
-                <div class="video-item" style="margin-bottom: 30px; padding: 20px; background: white; border: 1px solid #e0e0e0; border-radius: 12px;">
-                    <h3 style="margin: 0 0 8px 0; color: #333; font-size: 22px;">${videoTitle}</h3>
-                    ${videoAuthor ? `<div style="margin: 0 0 15px 0; color: #666; font-size: 16px;">${videoAuthor}</div>` : ''}
-                    ${item.description ? `<p style="margin: 0 0 15px 0; color: #666;">${item.description}</p>` : ''}
-                    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px;">
-                        <iframe src="${videoUrl}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allowfullscreen></iframe>
+                <div class="video-item external-service" style="margin-bottom: 20px; padding: 25px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 16px;">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div style="font-size: 48px;">🔗</div>
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 8px 0; color: #333; font-size: 24px; font-weight: 600;">${videoTitle}</h3>
+                            ${videoAuthor ? `<div style="margin: 0 0 12px 0; color: #6c757d; font-size: 18px;">${videoAuthor}</div>` : ''}
+                            ${item.description ? `<p style="margin: 0 0 15px 0; color: #666;">${item.description}</p>` : ''}
+                            <a href="${videoUrl}" target="_blank" style="display: inline-block; padding: 12px 24px; background: #6c757d; color: white; text-decoration: none; border-radius: 30px; font-weight: 500;">
+                                Перейти к видео →
+                            </a>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1627,6 +1912,15 @@ style.textContent = `
     .vk-music:hover {
         transform: translateY(-3px);
         box-shadow: 0 20px 35px rgba(0,119,255,0.15) !important;
+    }
+    
+    .rutube-video {
+        transition: all 0.3s ease;
+    }
+    
+    .rutube-video:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 35px rgba(52,161,240,0.15) !important;
     }
     
     audio {
