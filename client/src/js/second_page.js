@@ -201,10 +201,23 @@ function showTabContent(tabId, container) {
             items = materials[dataField] || [];
             break;
         case 'images':
-            title = 'Картинки';
-            icon = '🖼️';
-            items = materials[dataField] || [];
-            break;
+             title = 'Картинки';
+             icon = '🖼️';
+             items = materials[dataField] || [];
+             html += '<div class="images-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">';
+             items.forEach(item => {
+                const imageUrl = item.url || item.src || item.path;
+            if (imageUrl) {
+            html += `
+                <div class="image-item" style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                    <img src="${imageUrl}" alt="${item.title || 'Image'}" style="width: 100%; height: 200px; object-fit: cover;">
+                    ${item.title ? `<p style="padding: 8px; margin: 0; text-align: center;">${item.title}</p>` : ''}
+                </div>
+            `;
+        }
+    });
+             html += '</div>';
+             break;
         case 'exercises':
             title = 'Упражнения';
             icon = '📖';
