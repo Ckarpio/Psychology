@@ -93,109 +93,6 @@ function addBackButton() {
 }
 
 /**
- * Функция для обработки URL Pinterest
- * @param {string} url - URL изображения
- * @returns {string|null} - обработанный URL или null
- */
-function processPinterestUrl(url) {
-    if (!url) return url;
-    
-    // Если это уже прямая ссылка на изображение Pinterest
-    if (url.includes('i.pinimg.com')) {
-        return url;
-    }
-    
-    // Если это ссылка на пин, пытаемся преобразовать
-    if (url.includes('pinterest.com/pin/') || url.includes('pin.it/')) {
-        console.warn('Обнаружена ссылка на пин Pinterest. Нужна прямая ссылка на изображение (i.pinimg.com)');
-        return null;
-    }
-    
-    return url;
-}
-
-/**
- * Функция для загрузки и обработки фотографий
- * @param {string} imageUrl - URL изображения
- * @returns {Promise<string|null>} - обработанный URL или путь к изображению
- */
-async function loadImage(imageUrl) {
-    if (!imageUrl) return null;
-    
-    // Обрабатываем URL Pinterest
-    const processedUrl = processPinterestUrl(imageUrl);
-    if (!processedUrl) return null;
-    
-    console.log('Попытка загрузить изображение:', processedUrl);
-    
-    try {
-        // Если это уже полный URL, возвращаем как есть
-        if (processedUrl.startsWith('http')) {
-            // Для Pinterest не проверяем HEAD-запросом, т.к. могут быть ограничения
-            if (processedUrl.includes('i.pinimg.com')) {
-                return processedUrl;
-            }
-            
-            // Проверяем, доступно ли изображение
-            const response = await fetch(processedUrl, { method: 'HEAD' }).catch(() => null);
-            if (response && response.ok) {
-                return processedUrl;
-            } else {
-                console.warn('Изображение не доступно по URL:', processedUrl);
-                return null;
-            }
-        }
-        
-        // Если это относительный путь, добавляем базовый URL
-        const fullUrl = `${API_URL}${processedUrl}`;
-        
-        // Проверяем, доступно ли изображение
-        const response = await fetch(fullUrl, { method: 'HEAD' }).catch(() => null);
-        if (response && response.ok) {
-            return fullUrl;
-        } else {
-            console.warn('Изображение не найдено на сервере:', fullUrl);
-            return null;
-        }
-    } catch (error) {
-        console.error('Ошибка загрузки изображения:', error);
-        return null;
-    }
-}
-
-/**
- * Функция для предзагрузки нескольких изображений
- * @param {Array} items - массив объектов с изображениями
- * @returns {Promise<Array>} - массив объектов с загруженными изображениями
- */
-async function preloadImages(items) {
-    if (!items || !Array.isArray(items)) return [];
-    
-    const loadedItems = [];
-    
-    for (const item of items) {
-        // Ищем URL в поле "изображения" (русское название) и других возможных полях
-        const imageUrl = item.изображения || item.url || item.src || item.path || item.image_url || item.imageUrl;
-        
-        if (imageUrl) {
-            console.log('Найдено изображение в поле:', imageUrl);
-            const loadedUrl = await loadImage(imageUrl);
-            if (loadedUrl) {
-                loadedItems.push({
-                    ...item,
-                    loadedUrl: loadedUrl,
-                    originalUrl: imageUrl
-                });
-            } else {
-                console.warn('Не удалось загрузить изображение:', imageUrl);
-            }
-        }
-    }
-    
-    return loadedItems;
-}
-
-/**
  * Функция для извлечения информации из ссылки VK
  */
 function parseVKUrl(url) {
@@ -442,7 +339,8 @@ function detectMaterialsStructure(data) {
                 } else if (url.match(/\.(mp3|wav|ogg)$/i)) {
                     structured.music.push(item);
                 } else if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) || url.includes('i.pinimg.com')) {
-                    structured.images.push(item);
+                    // Временно игнорируем изображения
+                    structured.articles.push(item);
                 } else if (url) {
                     structured.articles.push(item);
                 } else {
@@ -563,7 +461,7 @@ async function showTabContent(tabId, container) {
     let html = `<h2 style="margin-top: 0; color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">${getIconForTab(tabId)} ${getTitleForTab(tabId)}</h2>`;
     
     if (items && items.length > 0) {
-        html += await renderTabContent(tabId, items);
+        html += renderTabContent(tabId, items);
     } else {
         html += getEmptyStateHTML(tabId);
     }
@@ -593,10 +491,11 @@ function getTitleForTab(tabId) {
     return titles[tabId] || tabId;
 }
 
-async function renderTabContent(tabId, items) {
+function renderTabContent(tabId, items) {
     switch(tabId) {
         case 'images':
-            return await renderImages(items);
+            // Временно показываем заглушку для фотографий
+            return '<div style="padding: 40px; text-align: center; color: #666;">📷 Загрузка фотографий временно отключена для отладки</div>';
         case 'music':
             return renderMusic(items);
         case 'video':
@@ -608,74 +507,6 @@ async function renderTabContent(tabId, items) {
         default:
             return renderDefault(items);
     }
-}
-
-/**
- * Рендеринг фотографий с поддержкой Pinterest
- */
-async function renderImages(items) {
-    let html = '<div class="images-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; padding: 20px 0;">';
-    
-    console.log('Загружаем изображения из БД:', items);
-    
-    // Предзагружаем изображения
-    const loadedItems = await preloadImages(items);
-    
-    console.log('Загруженные изображения:', loadedItems);
-    
-    if (loadedItems.length === 0) {
-        return '<div class="empty-gallery" style="padding: 80px 20px; text-align: center; background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%); border-radius: 24px; color: #999;"><p style="font-size: 64px; margin: 0 0 20px 0; opacity: 0.5;">🖼️</p><p style="font-size: 18px; color: #666;">Нет доступных фотографий</p></div>';
-    }
-    
-    for (const item of loadedItems) {
-        const imageUrl = item.loadedUrl;
-        const title = item.title || item.name || item.название || 'Фотография';
-        const description = item.description || item.описание || '';
-        const author = item.author || item.photographer || item.автор || '';
-        
-        // Определяем, Pinterest ли это
-        const isPinterest = imageUrl && imageUrl.includes('i.pinimg.com');
-        
-        html += `
-            <div class="image-item" style="background: white; border: 1px solid #e0e0e0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer;" 
-                 onclick="window.open('${imageUrl}', '_blank')"
-                 onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 12px 24px rgba(0,0,0,0.15)';"
-                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';">
-                
-                <!-- Контейнер для изображения -->
-                <div style="position: relative; width: 100%; height: 220px; background: #f5f5f5; overflow: hidden;">
-                    <img src="${imageUrl}" 
-                         alt="${title}" 
-                         style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;"
-                         onerror="this.onerror=null; 
-                                  this.parentElement.innerHTML='<div style=\'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f0f0f0;color:#999;\'><span style=\'font-size:48px;\'>🖼️</span><span style=\'margin-top:10px;\'>Фото не доступно</span></div>';"
-                         onload="this.style.opacity='1';">
-                </div>
-                
-                <!-- Информация о фотографии -->
-                <div style="padding: 16px;">
-                    <h4 style="margin: 0 0 8px 0; color: #333; font-size: 18px; font-weight: 600; line-height: 1.3;">${title}</h4>
-                    ${author ? `<div style="margin: 0 0 8px 0; color: #666; font-size: 14px;">📷 ${author}</div>` : ''}
-                    ${description ? `<p style="margin: 0 0 12px 0; color: #666; font-size: 14px; line-height: 1.5;">${description}</p>` : ''}
-                    
-                    <div style="margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap;">
-                        <span style="background: #4CAF5020; color: #4CAF50; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
-                            🖼️ Фотография
-                        </span>
-                        ${isPinterest ? `
-                            <span style="background: #E6002320; color: #E60023; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
-                                📌 Pinterest
-                            </span>
-                        ` : ''}
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    
-    html += '</div>';
-    
-    return html;
 }
 
 /**
@@ -821,7 +652,7 @@ function renderMusic(items) {
 }
 
 /**
- * Рендеринг видео только с Rutube (без отображения длительности)
+ * Рендеринг видео только с Rutube
  */
 function renderRutubeVideos(items) {
     let html = '<div class="video-list rutube-videos">';
@@ -878,7 +709,7 @@ function renderRutubeVideos(items) {
                             </iframe>
                         </div>
                         
-                        <!-- Информация и ссылки (без длительности) -->
+                        <!-- Информация и ссылки -->
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; padding: 0 10px;">
                             <div style="display: flex; gap: 15px; align-items: center;">
                                 <span style="color: #34A1F0; font-size: 14px; background: #34A1F010; padding: 4px 12px; border-radius: 20px;">
@@ -1127,10 +958,6 @@ style.textContent = `
     
     .rutube-videos iframe:hover {
         opacity: 0.95;
-    }
-    
-    .images-gallery {
-        animation: fadeIn 0.5s ease-out;
     }
 `;
 document.head.appendChild(style);
