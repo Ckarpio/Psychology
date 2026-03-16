@@ -1556,6 +1556,9 @@ function extractPinterestImageUrl(url) {
 /**
  * Загрузка рекомендаций из базы данных
  */
+/**
+ * Загрузка рекомендаций из базы данных
+ */
 async function loadRecommendationsFromDB(emotionCode) {
     try {
         const response = await fetch(`${API_URL}/api/recommendation?emotion=${emotionCode}`);
@@ -1565,9 +1568,18 @@ async function loadRecommendationsFromDB(emotionCode) {
         }
         
         const data = await response.json();
-        console.log('Данные из базы данных:', data);
+        console.log('🔴🔴🔴 ПОЛНЫЙ ОТВЕТ ОТ СЕРВЕРА:', JSON.stringify(data, null, 2));
         
-        // Проверяем структуру с полем "material"
+        // Проверяем все возможные структуры
+        console.log('🔍 Проверка структуры:');
+        console.log('  - data.material?.exercise:', data.material?.exercise);
+        console.log('  - data.material?.exercises:', data.material?.exercises);
+        console.log('  - data.exercise:', data.exercise);
+        console.log('  - data.exercises:', data.exercises);
+        console.log('  - data.materials?.exercise:', data.materials?.exercise);
+        console.log('  - data.materials?.exercises:', data.materials?.exercises);
+        
+        // Проверяем, есть ли поле material
         if (data.material) {
             console.log('🔴 Данные пришли в формате material');
             
@@ -1576,7 +1588,7 @@ async function loadRecommendationsFromDB(emotionCode) {
                 music: data.material.music || [],
                 video: data.material.video || [],
                 images: data.material.images || [],
-                exercise: data.material.exercise || [],      // Изменено с exercises на exercise
+                exercise: data.material.exercise || data.material.exercises || [], // Пробуем оба варианта
                 articles: data.material.articles || []
             };
             
@@ -1584,14 +1596,16 @@ async function loadRecommendationsFromDB(emotionCode) {
             window.currentEmotionMaterials = materialData;
             
         } else if (data.materials) {
+            console.log('🔴 Данные пришли в формате materials');
             window.currentEmotionMaterials = data.materials;
         } else if (Array.isArray(data)) {
+            console.log('🔴 Данные пришли как массив');
             // Группируем данные по типу
             const groupedData = {
                 music: [],
                 video: [],
                 images: [],
-                exercise: [],        // Изменено с exercises на exercise
+                exercise: [],
                 articles: []
             };
             
@@ -1616,7 +1630,7 @@ async function loadRecommendationsFromDB(emotionCode) {
                         groupedData.images.push(unifiedItem);
                         break;
                     case 'exercise':
-                        groupedData.exercise.push(unifiedItem);  // Изменено с exercises на exercise
+                        groupedData.exercise.push(unifiedItem);
                         break;
                     case 'article':
                         groupedData.articles.push(unifiedItem);
@@ -1624,20 +1638,26 @@ async function loadRecommendationsFromDB(emotionCode) {
                 }
             });
             
+            console.log('🔴 Сгруппированные данные:', groupedData);
             window.currentEmotionMaterials = groupedData;
         } else {
             console.warn('Неизвестная структура данных:', data);
-            window.currentEmotionMaterials = detectMaterialsStructure(data);
+            window.currentEmotionMaterials = {
+                music: [],
+                video: [],
+                images: [],
+                exercise: [],
+                articles: []
+            };
         }
         
-        console.log('Обработанные материалы из БД:', window.currentEmotionMaterials);
+        console.log('🔴 Итоговые материалы в window.currentEmotionMaterials:', window.currentEmotionMaterials);
         
     } catch (error) {
-        console.error('Ошибка при загрузке из базы данных:', error);
+        console.error('❌ Ошибка при загрузке из базы данных:', error);
         displayError('Не удалось загрузить материалы из базы данных');
     }
 }
-
 /**
  * Пытается определить структуру материалов из полученных данных
  */
