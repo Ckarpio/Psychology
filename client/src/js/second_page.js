@@ -1525,14 +1525,34 @@ function getRutubeEmbedUrl(url) {
 /**
  * Функция для извлечения ID изображения из ссылки Pinterest
  */
+function extractPinterestImageUrl(url) {
+    if (!url) return null;
+    
+    // Если это уже прямая ссылка на изображение Pinterest
+    if (url.includes('i.pinimg.com') && (url.includes('.jpg') || url.includes('.png') || url.includes('.jpeg') || url.includes('.webp'))) {
+        return url;
+    }
+    
+    // Пробуем извлечь ID из разных форматов ссылок Pinterest
+    const pinMatch = url.match(/pinterest\.com\/pin\/(\d+)/i) || 
+                     url.match(/pin\/(\d+)/i) ||
+                     url.match(/\/pin\/(\d+)/i);
+    
+    if (pinMatch) {
+        const pinId = pinMatch[1];
+        const folder = Math.abs(parseInt(pinId) % 1000).toString().padStart(3, '0');
+        return `https://i.pinimg.com/originals/${folder}/${pinId}.jpg`;
+    }
+    
+    // Если это pin.it ссылка, возвращаем как есть
+    if (url.includes('pin.it/')) {
+        console.warn('⚠️ Используйте прямые ссылки на изображения Pinterest (i.pinimg.com) для лучшей совместимости');
+        return url;
+    }
+    
+    return url;
+}
 
-
-/**
- * Загрузка рекомендаций из базы данных
- */
-/**
- * Загрузка рекомендаций из базы данных
- */
 /**
  * Загрузка рекомендаций из базы данных
  */
@@ -1545,22 +1565,21 @@ async function loadRecommendationsFromDB(emotionCode) {
         }
         
         const data = await response.json();
-        console.log('🔴🔴🔴 ПОЛНЫЙ ОТВЕТ ОТ СЕРВЕРА:', JSON.stringify(data, null, 2));
+        console.log('Данные из базы данных:', data);
         
         // Проверяем структуру с полем "material"
         if (data.material) {
-            console.log('🔴 Данные пришли в формате material');
+            console.log('Данные пришли в формате material');
             
             // Извлекаем данные из material
             const materialData = {
                 music: data.material.music || [],
                 video: data.material.video || [],
                 images: data.material.images || [],
-                exercises: data.material.exercises || [], // ИЗМЕНЕНО: exercises → exercise
+                exercises: data.material.exercises || [], // ВАЖНО: exercises с 's'
                 articles: data.material.articles || []
             };
             
-            console.log('🔴 Данные после обработки:', materialData);
             window.currentEmotionMaterials = materialData;
             
         } else if (data.materials) {
@@ -1571,7 +1590,7 @@ async function loadRecommendationsFromDB(emotionCode) {
                 music: [],
                 video: [],
                 images: [],
-                exercises: [],
+                exercises: [], // ВАЖНО: exercises с 's'
                 articles: []
             };
             
@@ -1595,7 +1614,7 @@ async function loadRecommendationsFromDB(emotionCode) {
                     case 'image':
                         groupedData.images.push(unifiedItem);
                         break;
-                    case 'exercise':
+                    case 'exercises': // ВАЖНО: 'exercises' с 's'
                         groupedData.exercises.push(unifiedItem);
                         break;
                     case 'article':
@@ -1611,18 +1630,19 @@ async function loadRecommendationsFromDB(emotionCode) {
                 music: [],
                 video: [],
                 images: [],
-                exercise: [],
+                exercises: [], // ВАЖНО: exercises с 's'
                 articles: []
             };
         }
         
-        console.log('🔴 Итоговые материалы в window.currentEmotionMaterials:', window.currentEmotionMaterials);
+        console.log('Обработанные материалы из БД:', window.currentEmotionMaterials);
         
     } catch (error) {
-        console.error('❌ Ошибка при загрузке из базы данных:', error);
+        console.error('Ошибка при загрузке из базы данных:', error);
         displayError('Не удалось загрузить материалы из базы данных');
     }
 }
+
 /**
  * Пытается определить структуру материалов из полученных данных
  */
@@ -1631,7 +1651,7 @@ function detectMaterialsStructure(data) {
         music: [],
         video: [],
         images: [],
-        exercise: [],        // Изменено с exercises на exercise
+        exercises: [], // ВАЖНО: exercises с 's'
         articles: []
     };
     
@@ -1768,12 +1788,14 @@ async function showTabContent(tabId, container) {
         'music': 'music',
         'video': 'video',
         'images': 'images',
-        'exercise': 'exercise',        // Изменено с exercises на exercise
+        'exercises': 'exercises', // ВАЖНО: 'exercises' с 's'
         'articles': 'articles'
     };
     
     const dataField = tabMapping[tabId];
     items = materials[dataField] || [];
+    
+    console.log(`Рендерим вкладку ${tabId}, элементов:`, items.length);
     
     let html = `<h2 style="margin-top: 0; color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">${getIconForTab(tabId)} ${getTitleForTab(tabId)}</h2>`;
     
@@ -1791,7 +1813,7 @@ function getIconForTab(tabId) {
         'music': '🎵',
         'video': '🎬',
         'images': '🖼️',
-        'exercises': '🏋️',        // Изменено с exercises на exercise
+        'exercises': '🏋️', // ВАЖНО: 'exercises' с 's'
         'articles': '🔗'
     };
     return icons[tabId] || '📁';
@@ -1802,7 +1824,7 @@ function getTitleForTab(tabId) {
         'music': 'Музыка',
         'video': 'Видео',
         'images': 'Картинки',
-        'exercises': 'Видео-упражнения',   // Изменено с exercises на exercise
+        'exercises': 'Видео-упражнения', // ВАЖНО: 'exercises' с 's'
         'articles': 'Статьи'
     };
     return titles[tabId] || tabId;
@@ -1816,8 +1838,8 @@ async function renderTabContent(tabId, items) {
             return renderMusic(items);
         case 'video':
             return renderRutubeVideos(items);
-        case 'exercise':                     // Изменено с exercises на exercise
-            return renderRutubeExercise(items); // Изменено с renderRutubeExercises на renderRutubeExercise
+        case 'exercises': // ВАЖНО: 'exercises' с 's'
+            return renderRutubeExercises(items);
         case 'articles':
             return renderArticlesWithLink(items);
         default:
@@ -2149,9 +2171,9 @@ function renderRutubeVideos(items) {
 
 /**
  * Функция для рендеринга упражнений с Rutube (ЗЕЛЕНЫЙ СТИЛЬ)
- * Вызывается для type = 'exercise' - ИЗМЕНЕНО НАЗВАНИЕ ФУНКЦИИ
+ * Вызывается для type = 'exercises' - ВАЖНО: с 's' на конце
  */
-function renderRutubeExercise(items) {
+function renderRutubeExercises(items) {
     console.log('🏋️ Рендерим УПРАЖНЕНИЯ (зеленый стиль), элементов:', items.length);
     
     let html = '<div class="video-list exercise-videos">';
@@ -2267,7 +2289,7 @@ function renderRutubeExercise(items) {
 }
 
 /**
- * НОВАЯ ФУНКЦИЯ: Рендеринг статей с кнопкой по ссылке
+ * Рендеринг статей с кнопкой по ссылке
  */
 function renderArticlesWithLink(items) {
     let html = '<div class="articles-list">';
@@ -2348,7 +2370,7 @@ function getEmptyStateHTML(tabId) {
         'music': '🎵 В базе данных нет музыкальных материалов для этой эмоции',
         'video': '🎬 В базе данных нет видео с Rutube для этой эмоции',
         'images': '🖼️ В базе данных нет изображений для этой эмоции',
-        'exercises': '🏋️ В базе данных нет видео-упражнений для этой эмоции',  // Изменено с exercises на exercise
+        'exercises': '🏋️ В базе данных нет видео-упражнений для этой эмоции',
         'articles': '📄 В базе данных нет статей для этой эмоции'
     };
     
