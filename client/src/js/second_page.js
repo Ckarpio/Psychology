@@ -1,3 +1,4 @@
+
 // import { API_URL } from "./const/const.js";
 
 // // Глобальная переменная для хранения материалов
@@ -337,6 +338,37 @@
 // }
 
 // /**
+//  * Функция для извлечения ID изображения из ссылки Pinterest
+//  */
+// function extractPinterestImageUrl(url) {
+//     if (!url) return null;
+    
+//     // Если это уже прямая ссылка на изображение Pinterest
+//     if (url.includes('i.pinimg.com') && (url.includes('.jpg') || url.includes('.png') || url.includes('.jpeg') || url.includes('.webp'))) {
+//         return url;
+//     }
+    
+//     // Пробуем извлечь ID из разных форматов ссылок Pinterest
+//     const pinMatch = url.match(/pinterest\.com\/pin\/(\d+)/i) || 
+//                      url.match(/pin\/(\d+)/i) ||
+//                      url.match(/\/pin\/(\d+)/i);
+    
+//     if (pinMatch) {
+//         const pinId = pinMatch[1];
+//         const folder = Math.abs(parseInt(pinId) % 1000).toString().padStart(3, '0');
+//         return `https://i.pinimg.com/originals/${folder}/${pinId}.jpg`;
+//     }
+    
+//     // Если это pin.it ссылка, возвращаем как есть
+//     if (url.includes('pin.it/')) {
+//         console.warn('⚠️ Используйте прямые ссылки на изображения Pinterest (i.pinimg.com) для лучшей совместимости');
+//         return url;
+//     }
+    
+//     return url;
+// }
+
+// /**
 //  * Загрузка рекомендаций из базы данных
 //  */
 // async function loadRecommendationsFromDB(emotionCode) {
@@ -350,7 +382,47 @@
 //         const data = await response.json();
 //         console.log('Данные из базы данных:', data);
         
-//         if (data.materials) {
+//         // Группируем данные по типу, если они пришли как массив
+//         if (Array.isArray(data)) {
+//             const groupedData = {
+//                 music: [],
+//                 video: [],
+//                 images: [],
+//                 exercises: [],
+//                 articles: []
+//             };
+            
+//             data.forEach(item => {
+//                 const type = item.type?.toLowerCase();
+//                 const unifiedItem = {
+//                     id: item.id,
+//                     title: item.title || 'Без названия',
+//                     description: item.description || item.tip || '',
+//                     url: item.url || '',
+//                     author: item.author || ''
+//                 };
+                
+//                 switch(type) {
+//                     case 'music':
+//                         groupedData.music.push(unifiedItem);
+//                         break;
+//                     case 'video':
+//                         groupedData.video.push(unifiedItem);
+//                         break;
+//                     case 'image':
+//                         groupedData.images.push(unifiedItem);
+//                         break;
+//                     case 'exercise':
+//                         groupedData.exercises.push(unifiedItem);
+//                         break;
+//                     case 'article':
+//                         groupedData.articles.push(unifiedItem);
+//                         break;
+//                 }
+//             });
+            
+//             window.currentEmotionMaterials = groupedData;
+//         } else if (data.materials) {
 //             window.currentEmotionMaterials = data.materials;
 //         } else if (data.material) {
 //             window.currentEmotionMaterials = data.material;
@@ -403,7 +475,7 @@
 //                         }
 //                     } else if (item.url.match(/\.(mp3|wav|ogg)$/i)) {
 //                         structured.music.push(item);
-//                     } else if (item.url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+//                     } else if (item.url.match(/\.(jpg|jpeg|png|gif|webp)$/i) || item.url.includes('i.pinimg.com')) {
 //                         structured.images.push(item);
 //                     } else {
 //                         structured.articles.push(item);
@@ -524,7 +596,7 @@
 //     let html = `<h2 style="margin-top: 0; color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px;">${getIconForTab(tabId)} ${getTitleForTab(tabId)}</h2>`;
     
 //     if (items && items.length > 0) {
-//         html += renderTabContent(tabId, items);
+//         html += await renderTabContent(tabId, items);
 //     } else {
 //         html += getEmptyStateHTML(tabId);
 //     }
@@ -537,8 +609,8 @@
 //         'music': '🎵',
 //         'video': '🎬',
 //         'images': '🖼️',
-//         'exercises': '📖',
-//         'articles': '📄'
+//         'exercises': '🏋️', // Изменено с 📖 на 🏋️
+//         'articles': '🔗'    // Изменено с 📄 на 🔗
 //     };
 //     return icons[tabId] || '📁';
 // }
@@ -548,24 +620,24 @@
 //         'music': 'Музыка',
 //         'video': 'Видео',
 //         'images': 'Картинки',
-//         'exercises': 'Упражнения',
+//         'exercises': 'Видео-упражнения', // Изменено
 //         'articles': 'Статьи'
 //     };
 //     return titles[tabId] || tabId;
 // }
 
-// function renderTabContent(tabId, items) {
+// async function renderTabContent(tabId, items) {
 //     switch(tabId) {
 //         case 'images':
-//             return renderImages(items);
+//             return await renderImages(items);
 //         case 'music':
 //             return renderMusic(items);
 //         case 'video':
-//             return renderRutubeVideos(items);
+//             return renderRutubeVideos(items, 'video');
 //         case 'exercises':
-//             return renderExercises(items);
+//             return renderRutubeVideos(items, 'exercise'); // Используем ту же функцию, но с типом exercise
 //         case 'articles':
-//             return renderArticles(items);
+//             return renderArticlesWithLink(items); // Новая функция
 //         default:
 //             return renderDefault(items);
 //     }
@@ -589,6 +661,9 @@
 //         const title = item.title || item.name || 'Изображение';
 //         const description = item.description || '';
         
+//         // Определяем источник
+//         const isPinterest = imageUrl.includes('i.pinimg.com');
+        
 //         html += `
 //             <div class="image-item" style="background: white; border: 1px solid #e0e0e0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer;" 
 //                  onclick="window.open('${imageUrl}', '_blank')"
@@ -609,10 +684,15 @@
 //                     <h4 style="margin: 0 0 8px 0; color: #333; font-size: 18px; font-weight: 600; line-height: 1.3;">${title}</h4>
 //                     ${description ? `<p style="margin: 0; color: #666; font-size: 14px; line-height: 1.5;">${description}</p>` : ''}
                     
-//                     <div style="margin-top: 12px;">
+//                     <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
 //                         <span style="background: #4CAF5020; color: #4CAF50; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
 //                             🖼️ Изображение
 //                         </span>
+//                         ${isPinterest ? `
+//                             <span style="background: #E6002320; color: #E60023; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
+//                                 📌 Pinterest
+//                             </span>
+//                         ` : ''}
 //                     </div>
 //                 </div>
 //             </div>
@@ -767,17 +847,30 @@
 // }
 
 // /**
-//  * Рендеринг видео только с Rutube
+//  * УНИВЕРСАЛЬНАЯ ФУНКЦИЯ: Рендеринг видео Rutube (и для видео, и для упражнений)
 //  */
-// function renderRutubeVideos(items) {
-//     let html = '<div class="video-list rutube-videos">';
+// function renderRutubeVideos(items, type = 'video') {
+//     let html = `<div class="video-list ${type}-videos">`;
 //     let hasValidVideos = false;
+    
+//     // Определяем стили в зависимости от типа
+//     const isExercise = type === 'exercise';
+//     const bgColor = isExercise ? '#4CAF50' : '#34A1F0';
+//     const bgColorLight = isExercise ? '#4CAF5008' : '#34A1F008';
+//     const bgColorMedium = isExercise ? '#4CAF5015' : '#34A1F015';
+//     const borderColor = isExercise ? '#4CAF5030' : '#34A1F030';
+//     const shadowColor = isExercise ? 'rgba(76, 175, 80, 0.15)' : 'rgba(52,161,240,0.15)';
+//     const icon = isExercise ? '🏋️' : '🎬';
+//     const label = isExercise ? 'Видео-упражнение' : 'Rutube';
+//     const buttonText = isExercise ? 'Смотреть упражнение' : 'Смотреть на Rutube';
+//     const emptyIcon = isExercise ? '🏋️' : '🎬';
+//     const emptyMessage = isExercise ? 'Нет видео-упражнений на Rutube для этой эмоции' : 'Нет видео с Rutube для этой эмоции';
     
 //     items.forEach((item) => {
 //         const videoUrl = item.url || item.video_url || item.videoUrl || item.embed_url || item.embedUrl;
         
 //         if (!videoUrl) {
-//             console.warn('Нет URL для видео элемента:', item);
+//             console.warn('Нет URL для элемента:', item);
 //             return;
 //         }
         
@@ -788,25 +881,25 @@
 //         if (rutubeInfo) {
 //             hasValidVideos = true;
             
-//             // Получаем название видео и автора
-//             const videoTitle = item.title || item.name || 'Видео на Rutube';
-//             const videoAuthor = item.author || item.artist || item.channel || 'Rutube';
+//             // Получаем название и автора
+//             const itemTitle = item.title || item.name || (isExercise ? 'Видео-упражнение' : 'Видео на Rutube');
+//             const itemAuthor = item.author || item.artist || item.channel || '';
             
 //             // Если есть embed URL - показываем плеер
 //             if (rutubeInfo.canEmbed && rutubeInfo.embedUrl) {
 //                 html += `
-//                     <div class="video-item rutube-video" style="margin-bottom: 40px; padding: 25px; background: linear-gradient(135deg, #34A1F008 0%, #34A1F015 100%); border: 2px solid #34A1F030; border-radius: 24px; box-shadow: 0 15px 30px rgba(52,161,240,0.15);">
-//                         <!-- Заголовок видео -->
-//                         <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #34A1F030;">
-//                             <div style="background: #34A1F0; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 15px rgba(52,161,240,0.3);">
-//                                 <span style="font-size: 30px; color: white;">🎬</span>
+//                     <div class="video-item ${type}-video" style="margin-bottom: 40px; padding: 25px; background: linear-gradient(135deg, ${bgColorLight} 0%, ${bgColorMedium} 100%); border: 2px solid ${borderColor}; border-radius: 24px; box-shadow: 0 15px 30px ${shadowColor};">
+//                         <!-- Заголовок -->
+//                         <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid ${borderColor};">
+//                             <div style="background: ${bgColor}; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 15px ${bgColor}80;">
+//                                 <span style="font-size: 30px; color: white;">${icon}</span>
 //                             </div>
 //                             <div style="flex: 1;">
-//                                 <h3 style="margin: 0 0 8px 0; color: #1A1A1A; font-size: 26px; font-weight: 700; line-height: 1.3;">${videoTitle}</h3>
+//                                 <h3 style="margin: 0 0 8px 0; color: #1A1A1A; font-size: 26px; font-weight: 700; line-height: 1.3;">${itemTitle}</h3>
 //                                 <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-//                                     <span style="color: #34A1F0; font-size: 18px; font-weight: 500;">${videoAuthor}</span>
-//                                     <span style="background: #34A1F020; color: #34A1F0; padding: 4px 12px; border-radius: 30px; font-size: 13px; font-weight: 500;">
-//                                         Rutube
+//                                     ${itemAuthor ? `<span style="color: ${bgColor}; font-size: 18px; font-weight: 500;">${itemAuthor}</span>` : ''}
+//                                     <span style="background: ${bgColor}20; color: ${bgColor}; padding: 4px 12px; border-radius: 30px; font-size: 13px; font-weight: 500;">
+//                                         ${label}
 //                                     </span>
 //                                 </div>
 //                                 ${item.description ? `<p style="margin: 15px 0 0 0; color: #666; line-height: 1.6;">${item.description}</p>` : ''}
@@ -814,7 +907,7 @@
 //                         </div>
                         
 //                         <!-- Rutube плеер -->
-//                         <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 16px; margin-bottom: 20px; background: #000; box-shadow: 0 10px 25px rgba(52,161,240,0.3);">
+//                         <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 16px; margin-bottom: 20px; background: #000; box-shadow: 0 10px 25px ${bgColor}80;">
 //                             <iframe 
 //                                 src="${rutubeInfo.embedUrl}" 
 //                                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; border-radius: 16px;"
@@ -827,18 +920,15 @@
 //                         <!-- Информация и ссылки -->
 //                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; padding: 0 10px;">
 //                             <div style="display: flex; gap: 15px; align-items: center;">
-//                                 <span style="color: #34A1F0; font-size: 14px;">
-//                                     📊 ID: ${rutubeInfo.videoId || 'загрузка...'}
-//                                 </span>
-//                                 <span style="color: #999; font-size: 14px;">
-//                                     ⏱️ Длительность: загрузка...
+//                                 <span style="color: ${bgColor}; font-size: 14px; background: ${bgColor}10; padding: 4px 12px; border-radius: 20px;">
+//                                     🆔 ID: ${rutubeInfo.videoId ? rutubeInfo.videoId.substring(0, 8) + '...' : 'загрузка'}
 //                                 </span>
 //                             </div>
 //                             <a href="${videoUrl}" target="_blank" 
-//                                style="display: inline-flex; align-items: center; gap: 8px; background: #34A1F0; color: white; text-decoration: none; padding: 12px 24px; border-radius: 50px; font-weight: 600; font-size: 15px; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(52,161,240,0.3);"
-//                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 18px rgba(52,161,240,0.4)'; this.style.background='#2A8CD0';"
-//                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(52,161,240,0.3)'; this.style.background='#34A1F0';">
-//                                 <span>Смотреть на Rutube</span>
+//                                style="display: inline-flex; align-items: center; gap: 8px; background: ${bgColor}; color: white; text-decoration: none; padding: 12px 24px; border-radius: 50px; font-weight: 600; font-size: 15px; transition: all 0.3s ease; box-shadow: 0 4px 12px ${bgColor}80;"
+//                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 18px ${bgColor}80'; this.style.background='${isExercise ? '#3d8b40' : '#2A8CD0'}';"
+//                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px ${bgColor}80'; this.style.background='${bgColor}';">
+//                                 <span>${buttonText}</span>
 //                                 <span style="font-size: 18px;">→</span>
 //                             </a>
 //                         </div>
@@ -847,13 +937,13 @@
 //             } else {
 //                 // Если не удалось получить embed URL
 //                 html += `
-//                     <div class="video-item rutube-video" style="margin-bottom: 30px; padding: 30px; background: linear-gradient(135deg, #34A1F008 0%, #34A1F015 100%); border: 2px solid #34A1F030; border-radius: 24px; text-align: center;">
-//                         <div style="font-size: 64px; margin-bottom: 20px;">🎬</div>
-//                         <h3 style="margin: 0 0 15px 0; color: #1A1A1A; font-size: 24px; font-weight: 600;">${videoTitle}</h3>
-//                         <p style="margin: 0 0 25px 0; color: #666;">Это видео доступно для просмотра только на Rutube</p>
+//                     <div class="video-item ${type}-video" style="margin-bottom: 30px; padding: 30px; background: linear-gradient(135deg, ${bgColorLight} 0%, ${bgColorMedium} 100%); border: 2px solid ${borderColor}; border-radius: 24px; text-align: center;">
+//                         <div style="font-size: 64px; margin-bottom: 20px;">${icon}</div>
+//                         <h3 style="margin: 0 0 15px 0; color: #1A1A1A; font-size: 24px; font-weight: 600;">${itemTitle}</h3>
+//                         <p style="margin: 0 0 25px 0; color: #666;">Это ${isExercise ? 'упражнение' : 'видео'} доступно для просмотра только на Rutube</p>
 //                         <a href="${videoUrl}" target="_blank" 
-//                            style="display: inline-block; padding: 14px 32px; background: #34A1F0; color: white; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px;">
-//                             Перейти к видео на Rutube →
+//                            style="display: inline-block; padding: 14px 32px; background: ${bgColor}; color: white; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px;">
+//                             ${buttonText} →
 //                         </a>
 //                     </div>
 //                 `;
@@ -864,8 +954,8 @@
 //     if (!hasValidVideos) {
 //         html += `
 //             <div style="padding: 80px 20px; text-align: center; background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%); border-radius: 24px;">
-//                 <p style="font-size: 64px; margin: 0 0 20px 0; opacity: 0.5;">🎬</p>
-//                 <p style="font-size: 18px; color: #666;">Нет видео с Rutube для этой эмоции</p>
+//                 <p style="font-size: 64px; margin: 0 0 20px 0; opacity: 0.5;">${emptyIcon}</p>
+//                 <p style="font-size: 18px; color: #666;">${emptyMessage}</p>
 //             </div>
 //         `;
 //     }
@@ -874,54 +964,63 @@
 //     return html;
 // }
 
-// function renderExercises(items) {
-//     let html = '<div class="exercises-list">';
-    
-//     items.forEach((item) => {
-//         html += `
-//             <div class="exercise-item" style="margin-bottom: 20px; padding: 25px; background: white; border: 1px solid #e0e0e0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-//                 <h3 style="margin: 0 0 10px 0; color: #333; font-size: 24px; font-weight: 600;">${item.title || item.name || 'Упражнение'}</h3>
-//                 ${item.subtitle ? `<div style="margin: 0 0 10px 0; color: #666; font-weight: 500;">${item.subtitle}</div>` : ''}
-//                 ${item.description ? `<p style="margin: 0 0 15px 0; color: #555;">${item.description}</p>` : ''}
-                
-//                 ${item.body || item.instructions || item.text || item.content ? `
-//                     <div style="background: #f5f5f5; padding: 20px; border-radius: 12px; margin-top: 15px;">
-//                         <pre style="margin: 0; white-space: pre-wrap; font-family: inherit; color: #333; line-height: 1.6;">${item.body || item.instructions || item.text || item.content}</pre>
-//                     </div>
-//                 ` : ''}
-//             </div>
-//         `;
-//     });
-    
-//     html += '</div>';
-//     return html;
-// }
-
-// function renderArticles(items) {
+// /**
+//  * НОВАЯ ФУНКЦИЯ: Рендеринг статей с кнопкой по ссылке
+//  */
+// function renderArticlesWithLink(items) {
 //     let html = '<div class="articles-list">';
+//     let hasArticles = false;
     
 //     items.forEach((item) => {
-//         const content = item.displayContent || item.text || item.body || item.content || item.description;
+//         const articleUrl = item.url || item.link || '';
+//         const articleText = item.description || item.content || item.text || '';
+//         const title = item.title || item.name || 'Статья';
+//         const author = item.author || '';
+        
+//         hasArticles = true;
         
 //         html += `
-//             <div class="article-item" style="margin-bottom: 25px; padding: 30px; background: white; border: 1px solid #e0e0e0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-//                 <h3 style="margin: 0 0 15px 0; color: #333; font-size: 28px; font-weight: 700; border-bottom: 2px solid #4CAF50; padding-bottom: 12px;">${item.title || item.name || 'Статья'}</h3>
-//                 ${item.author ? `<div style="margin: 0 0 15px 0; color: #666; font-style: italic; font-size: 16px;">Автор: ${item.author}</div>` : ''}
-                
-//                 <div style="line-height: 1.8; color: #444; font-size: 16px;">
-//                     ${content ? content.split('\n').map(paragraph => 
-//                         paragraph.trim() ? `<p style="margin-bottom: 20px;">${paragraph}</p>` : ''
-//                     ).join('') : '<p style="color: #999;">Содержание не доступно</p>'}
+//             <div class="article-item" style="margin-bottom: 25px; padding: 30px; background: white; border: 1px solid #e0e0e0; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s ease;">
+//                 <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+//                     <div style="background: #FF9800; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+//                         <span style="font-size: 24px; color: white;">📄</span>
+//                     </div>
+//                     <div style="flex: 1;">
+//                         <h3 style="margin: 0 0 5px 0; color: #333; font-size: 24px; font-weight: 700;">${title}</h3>
+//                         ${author ? `<div style="color: #FF9800; font-size: 16px;">${author}</div>` : ''}
+//                     </div>
 //                 </div>
                 
-//                 ${item.external_url || item.link || item.url ? `
-//                     <a href="${item.external_url || item.link || item.url}" target="_blank" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #4CAF50; color: white; text-decoration: none; border-radius: 30px; font-weight: 500;">
-//                         Читать полностью →
-//                     </a>
+//                 ${articleText ? `
+//                     <div style="background: #f9f9f9; padding: 20px; border-radius: 12px; margin: 15px 0; border-left: 4px solid #FF9800; line-height: 1.8; color: #444; font-size: 16px; white-space: pre-wrap;">
+//                         ${articleText.split('\n').map(p => p.trim() ? `<p style="margin-bottom: 15px;">${p}</p>` : '').join('')}
+//                     </div>
 //                 ` : ''}
+                
+//                 ${articleUrl ? `
+//                     <div style="margin-top: 20px; text-align: right;">
+//                         <a href="${articleUrl}" target="_blank" 
+//                            style="display: inline-flex; align-items: center; gap: 10px; background: #FF9800; color: white; text-decoration: none; padding: 12px 24px; border-radius: 50px; font-weight: 500; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3);"
+//                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 15px rgba(255, 152, 0, 0.4)'; this.style.background='#f57c00';"
+//                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(255, 152, 0, 0.3)'; this.style.background='#FF9800';">
+//                             <span>Читать статью</span>
+//                             <span style="font-size: 18px;">→</span>
+//                         </a>
+//                     </div>
+//                 ` : ''}
+                
+//                 <div style="margin-top: 15px;">
+//                     <span style="background: #FF980020; color: #FF9800; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">
+//                         📄 Статья
+//                     </span>
+//                 </div>
 //             </div>
 //         `;
 //     });
+    
+//     if (!hasArticles) {
+//         return '<div style="padding: 60px; text-align: center; color: #999;">📄 Нет статей</div>';
+//     }
     
 //     html += '</div>';
 //     return html;
@@ -947,7 +1046,7 @@
 //         'music': '🎵 В базе данных нет музыкальных материалов для этой эмоции',
 //         'video': '🎬 В базе данных нет видео с Rutube для этой эмоции',
 //         'images': '🖼️ В базе данных нет изображений для этой эмоции',
-//         'exercises': '📖 В базе данных нет упражнений для этой эмоции',
+//         'exercises': '🏋️ В базе данных нет видео-упражнений для этой эмоции',
 //         'articles': '📄 В базе данных нет статей для этой эмоции'
 //     };
     
@@ -1022,7 +1121,7 @@
 // // Добавляем CSS
 // const style = document.createElement('style');
 // style.textContent = `
-//     .image-item:hover, .music-item:hover, .exercise-item:hover, .article-item:hover {
+//     .image-item:hover, .music-item:hover, .article-item:hover, .video-item:hover {
 //         transform: translateY(-3px);
 //         box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
 //         transition: all 0.3s ease;
@@ -1046,13 +1145,20 @@
 //         box-shadow: 0 20px 35px rgba(0,119,255,0.15) !important;
 //     }
     
-//     .rutube-video {
+//     .video-item {
 //         transition: all 0.3s ease;
 //     }
     
-//     .rutube-video:hover {
+//     .video-item:hover {
 //         transform: translateY(-3px);
+//     }
+    
+//     .video-videos .video-item:hover {
 //         box-shadow: 0 25px 40px rgba(52,161,240,0.2) !important;
+//     }
+    
+//     .exercise-videos .video-item:hover {
+//         box-shadow: 0 25px 40px rgba(76, 175, 80, 0.2) !important;
 //     }
     
 //     audio {
@@ -1069,11 +1175,11 @@
 //         animation: fadeIn 0.5s ease-out;
 //     }
     
-//     .rutube-videos iframe {
+//     .video-item iframe {
 //         transition: opacity 0.3s;
 //     }
     
-//     .rutube-videos iframe:hover {
+//     .video-item iframe:hover {
 //         opacity: 0.95;
 //     }
 // `;
@@ -1477,7 +1583,7 @@ async function loadRecommendationsFromDB(emotionCode) {
                 const unifiedItem = {
                     id: item.id,
                     title: item.title || 'Без названия',
-                    description: item.description || item.tip || '',
+                    description: item.description || '',
                     url: item.url || '',
                     author: item.author || ''
                 };
@@ -1689,8 +1795,8 @@ function getIconForTab(tabId) {
         'music': '🎵',
         'video': '🎬',
         'images': '🖼️',
-        'exercises': '🏋️', // Изменено с 📖 на 🏋️
-        'articles': '🔗'    // Изменено с 📄 на 🔗
+        'exercises': '🏋️',
+        'articles': '🔗'
     };
     return icons[tabId] || '📁';
 }
@@ -1700,7 +1806,7 @@ function getTitleForTab(tabId) {
         'music': 'Музыка',
         'video': 'Видео',
         'images': 'Картинки',
-        'exercises': 'Видео-упражнения', // Изменено
+        'exercises': 'Видео-упражнения',
         'articles': 'Статьи'
     };
     return titles[tabId] || tabId;
@@ -1715,9 +1821,9 @@ async function renderTabContent(tabId, items) {
         case 'video':
             return renderRutubeVideos(items, 'video');
         case 'exercises':
-            return renderRutubeVideos(items, 'exercise'); // Используем ту же функцию, но с типом exercise
+            return renderRutubeVideos(items, 'exercise');
         case 'articles':
-            return renderArticlesWithLink(items); // Новая функция
+            return renderArticlesWithLink(items);
         default:
             return renderDefault(items);
     }
@@ -1927,7 +2033,7 @@ function renderMusic(items) {
 }
 
 /**
- * УНИВЕРСАЛЬНАЯ ФУНКЦИЯ: Рендеринг видео Rutube (и для видео, и для упражнений)
+ * ЕДИНСТВЕННАЯ УНИВЕРСАЛЬНАЯ ФУНКЦИЯ: Рендеринг видео Rutube (и для видео, и для упражнений)
  */
 function renderRutubeVideos(items, type = 'video') {
     let html = `<div class="video-list ${type}-videos">`;
