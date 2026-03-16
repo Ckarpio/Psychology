@@ -1556,7 +1556,7 @@ async function loadRecommendationsFromDB(emotionCode) {
                 music: data.material.music || [],
                 video: data.material.video || [],
                 images: data.material.images || [],
-                exercise: data.material.exercises || [], // ИЗМЕНЕНО: exercises → exercise
+                exercises: data.material.exercises || [], // ИЗМЕНЕНО: exercises → exercise
                 articles: data.material.articles || []
             };
             
@@ -1571,7 +1571,7 @@ async function loadRecommendationsFromDB(emotionCode) {
                 music: [],
                 video: [],
                 images: [],
-                exercise: [],
+                exercises: [],
                 articles: []
             };
             
@@ -1596,7 +1596,7 @@ async function loadRecommendationsFromDB(emotionCode) {
                         groupedData.images.push(unifiedItem);
                         break;
                     case 'exercise':
-                        groupedData.exercise.push(unifiedItem);
+                        groupedData.exercises.push(unifiedItem);
                         break;
                     case 'article':
                         groupedData.articles.push(unifiedItem);
@@ -1791,7 +1791,7 @@ function getIconForTab(tabId) {
         'music': '🎵',
         'video': '🎬',
         'images': '🖼️',
-        'exercise': '🏋️',        // Изменено с exercises на exercise
+        'exercises': '🏋️',        // Изменено с exercises на exercise
         'articles': '🔗'
     };
     return icons[tabId] || '📁';
@@ -1802,7 +1802,7 @@ function getTitleForTab(tabId) {
         'music': 'Музыка',
         'video': 'Видео',
         'images': 'Картинки',
-        'exercise': 'Видео-упражнения',   // Изменено с exercises на exercise
+        'exercises': 'Видео-упражнения',   // Изменено с exercises на exercise
         'articles': 'Статьи'
     };
     return titles[tabId] || tabId;
@@ -2348,7 +2348,7 @@ function getEmptyStateHTML(tabId) {
         'music': '🎵 В базе данных нет музыкальных материалов для этой эмоции',
         'video': '🎬 В базе данных нет видео с Rutube для этой эмоции',
         'images': '🖼️ В базе данных нет изображений для этой эмоции',
-        'exercise': '🏋️ В базе данных нет видео-упражнений для этой эмоции',  // Изменено с exercises на exercise
+        'exercises': '🏋️ В базе данных нет видео-упражнений для этой эмоции',  // Изменено с exercises на exercise
         'articles': '📄 В базе данных нет статей для этой эмоции'
     };
     
