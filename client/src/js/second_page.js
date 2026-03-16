@@ -1819,9 +1819,9 @@ async function renderTabContent(tabId, items) {
         case 'music':
             return renderMusic(items);
         case 'video':
-            return renderRutubeVideos(items, 'video');
+            return renderRutubeVideos(items);
         case 'exercises':
-            return renderRutubeVideos(items, 'exercise');
+            return renderRutubeExercises(items);
         case 'articles':
             return renderArticlesWithLink(items);
         default:
@@ -2033,30 +2033,31 @@ function renderMusic(items) {
 }
 
 /**
- * ЕДИНСТВЕННАЯ УНИВЕРСАЛЬНАЯ ФУНКЦИЯ: Рендеринг видео Rutube (и для видео, и для упражнений)
+ * Функция для рендеринга видео с Rutube (СИНИЙ СТИЛЬ)
+ * Вызывается для type = 'video'
  */
-function renderRutubeVideos(items, type = 'video') {
-    let html = `<div class="video-list ${type}-videos">`;
+function renderRutubeVideos(items) {
+    console.log('🎬 Рендерим ВИДЕО (синий стиль), элементов:', items.length);
+    
+    let html = '<div class="video-list video-videos">';
     let hasValidVideos = false;
     
-    // Определяем стили в зависимости от типа
-    const isExercise = type === 'exercise';
-    const bgColor = isExercise ? '#4CAF50' : '#34A1F0';
-    const bgColorLight = isExercise ? '#4CAF5008' : '#34A1F008';
-    const bgColorMedium = isExercise ? '#4CAF5015' : '#34A1F015';
-    const borderColor = isExercise ? '#4CAF5030' : '#34A1F030';
-    const shadowColor = isExercise ? 'rgba(76, 175, 80, 0.15)' : 'rgba(52,161,240,0.15)';
-    const icon = isExercise ? '🏋️' : '🎬';
-    const label = isExercise ? 'Видео-упражнение' : 'Rutube';
-    const buttonText = isExercise ? 'Смотреть упражнение' : 'Смотреть на Rutube';
-    const emptyIcon = isExercise ? '🏋️' : '🎬';
-    const emptyMessage = isExercise ? 'Нет видео-упражнений на Rutube для этой эмоции' : 'Нет видео с Rutube для этой эмоции';
+    const bgColor = '#34A1F0';
+    const bgColorLight = '#34A1F008';
+    const bgColorMedium = '#34A1F015';
+    const borderColor = '#34A1F030';
+    const shadowColor = 'rgba(52,161,240,0.15)';
+    const icon = '🎬';
+    const label = 'Rutube';
+    const buttonText = 'Смотреть на Rutube';
+    const emptyIcon = '🎬';
+    const emptyMessage = 'Нет видео с Rutube для этой эмоции';
     
     items.forEach((item) => {
         const videoUrl = item.url || item.video_url || item.videoUrl || item.embed_url || item.embedUrl;
         
         if (!videoUrl) {
-            console.warn('Нет URL для элемента:', item);
+            console.warn('Нет URL для видео элемента:', item);
             return;
         }
         
@@ -2068,13 +2069,13 @@ function renderRutubeVideos(items, type = 'video') {
             hasValidVideos = true;
             
             // Получаем название и автора
-            const itemTitle = item.title || item.name || (isExercise ? 'Видео-упражнение' : 'Видео на Rutube');
+            const itemTitle = item.title || item.name || 'Видео на Rutube';
             const itemAuthor = item.author || item.artist || item.channel || '';
             
             // Если есть embed URL - показываем плеер
             if (rutubeInfo.canEmbed && rutubeInfo.embedUrl) {
                 html += `
-                    <div class="video-item ${type}-video" style="margin-bottom: 40px; padding: 25px; background: linear-gradient(135deg, ${bgColorLight} 0%, ${bgColorMedium} 100%); border: 2px solid ${borderColor}; border-radius: 24px; box-shadow: 0 15px 30px ${shadowColor};">
+                    <div class="video-item video-video" style="margin-bottom: 40px; padding: 25px; background: linear-gradient(135deg, ${bgColorLight} 0%, ${bgColorMedium} 100%); border: 2px solid ${borderColor}; border-radius: 24px; box-shadow: 0 15px 30px ${shadowColor};">
                         <!-- Заголовок -->
                         <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid ${borderColor};">
                             <div style="background: ${bgColor}; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 15px ${bgColor}80;">
@@ -2112,7 +2113,7 @@ function renderRutubeVideos(items, type = 'video') {
                             </div>
                             <a href="${videoUrl}" target="_blank" 
                                style="display: inline-flex; align-items: center; gap: 8px; background: ${bgColor}; color: white; text-decoration: none; padding: 12px 24px; border-radius: 50px; font-weight: 600; font-size: 15px; transition: all 0.3s ease; box-shadow: 0 4px 12px ${bgColor}80;"
-                               onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 18px ${bgColor}80'; this.style.background='${isExercise ? '#3d8b40' : '#2A8CD0'}';"
+                               onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 18px ${bgColor}80'; this.style.background='#2A8CD0';"
                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px ${bgColor}80'; this.style.background='${bgColor}';">
                                 <span>${buttonText}</span>
                                 <span style="font-size: 18px;">→</span>
@@ -2123,10 +2124,129 @@ function renderRutubeVideos(items, type = 'video') {
             } else {
                 // Если не удалось получить embed URL
                 html += `
-                    <div class="video-item ${type}-video" style="margin-bottom: 30px; padding: 30px; background: linear-gradient(135deg, ${bgColorLight} 0%, ${bgColorMedium} 100%); border: 2px solid ${borderColor}; border-radius: 24px; text-align: center;">
+                    <div class="video-item video-video" style="margin-bottom: 30px; padding: 30px; background: linear-gradient(135deg, ${bgColorLight} 0%, ${bgColorMedium} 100%); border: 2px solid ${borderColor}; border-radius: 24px; text-align: center;">
                         <div style="font-size: 64px; margin-bottom: 20px;">${icon}</div>
                         <h3 style="margin: 0 0 15px 0; color: #1A1A1A; font-size: 24px; font-weight: 600;">${itemTitle}</h3>
-                        <p style="margin: 0 0 25px 0; color: #666;">Это ${isExercise ? 'упражнение' : 'видео'} доступно для просмотра только на Rutube</p>
+                        <p style="margin: 0 0 25px 0; color: #666;">Это видео доступно для просмотра только на Rutube</p>
+                        <a href="${videoUrl}" target="_blank" 
+                           style="display: inline-block; padding: 14px 32px; background: ${bgColor}; color: white; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px;">
+                            ${buttonText} →
+                        </a>
+                    </div>
+                `;
+            }
+        }
+    });
+    
+    if (!hasValidVideos) {
+        html += `
+            <div style="padding: 80px 20px; text-align: center; background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%); border-radius: 24px;">
+                <p style="font-size: 64px; margin: 0 0 20px 0; opacity: 0.5;">${emptyIcon}</p>
+                <p style="font-size: 18px; color: #666;">${emptyMessage}</p>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+/**
+ * Функция для рендеринга упражнений с Rutube (ЗЕЛЕНЫЙ СТИЛЬ)
+ * Вызывается для type = 'exercise'
+ */
+function renderRutubeExercises(items) {
+    console.log('🏋️ Рендерим УПРАЖНЕНИЯ (зеленый стиль), элементов:', items.length);
+    
+    let html = '<div class="video-list exercise-videos">';
+    let hasValidVideos = false;
+    
+    const bgColor = '#4CAF50';
+    const bgColorLight = '#4CAF5008';
+    const bgColorMedium = '#4CAF5015';
+    const borderColor = '#4CAF5030';
+    const shadowColor = 'rgba(76, 175, 80, 0.15)';
+    const icon = '🏋️';
+    const label = 'Видео-упражнение';
+    const buttonText = 'Смотреть упражнение';
+    const emptyIcon = '🏋️';
+    const emptyMessage = 'Нет видео-упражнений на Rutube для этой эмоции';
+    
+    items.forEach((item) => {
+        const videoUrl = item.url || item.video_url || item.videoUrl || item.embed_url || item.embedUrl;
+        
+        if (!videoUrl) {
+            console.warn('Нет URL для упражнения:', item);
+            return;
+        }
+        
+        // Получаем информацию о видео Rutube
+        const rutubeInfo = getRutubeEmbedUrl(videoUrl);
+        
+        // Показываем только видео с Rutube
+        if (rutubeInfo) {
+            hasValidVideos = true;
+            
+            // Получаем название и автора
+            const itemTitle = item.title || item.name || 'Видео-упражнение';
+            const itemAuthor = item.author || item.artist || item.channel || '';
+            
+            // Если есть embed URL - показываем плеер
+            if (rutubeInfo.canEmbed && rutubeInfo.embedUrl) {
+                html += `
+                    <div class="video-item exercise-video" style="margin-bottom: 40px; padding: 25px; background: linear-gradient(135deg, ${bgColorLight} 0%, ${bgColorMedium} 100%); border: 2px solid ${borderColor}; border-radius: 24px; box-shadow: 0 15px 30px ${shadowColor};">
+                        <!-- Заголовок -->
+                        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid ${borderColor};">
+                            <div style="background: ${bgColor}; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 15px ${bgColor}80;">
+                                <span style="font-size: 30px; color: white;">${icon}</span>
+                            </div>
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0 0 8px 0; color: #1A1A1A; font-size: 26px; font-weight: 700; line-height: 1.3;">${itemTitle}</h3>
+                                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                                    ${itemAuthor ? `<span style="color: ${bgColor}; font-size: 18px; font-weight: 500;">${itemAuthor}</span>` : ''}
+                                    <span style="background: ${bgColor}20; color: ${bgColor}; padding: 4px 12px; border-radius: 30px; font-size: 13px; font-weight: 500;">
+                                        ${label}
+                                    </span>
+                                </div>
+                                ${item.description ? `<p style="margin: 15px 0 0 0; color: #666; line-height: 1.6;">${item.description}</p>` : ''}
+                            </div>
+                        </div>
+                        
+                        <!-- Rutube плеер -->
+                        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 16px; margin-bottom: 20px; background: #000; box-shadow: 0 10px 25px ${bgColor}80;">
+                            <iframe 
+                                src="${rutubeInfo.embedUrl}" 
+                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; border-radius: 16px;"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                        
+                        <!-- Информация и ссылки -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; padding: 0 10px;">
+                            <div style="display: flex; gap: 15px; align-items: center;">
+                                <span style="color: ${bgColor}; font-size: 14px; background: ${bgColor}10; padding: 4px 12px; border-radius: 20px;">
+                                    🆔 ID: ${rutubeInfo.videoId ? rutubeInfo.videoId.substring(0, 8) + '...' : 'загрузка'}
+                                </span>
+                            </div>
+                            <a href="${videoUrl}" target="_blank" 
+                               style="display: inline-flex; align-items: center; gap: 8px; background: ${bgColor}; color: white; text-decoration: none; padding: 12px 24px; border-radius: 50px; font-weight: 600; font-size: 15px; transition: all 0.3s ease; box-shadow: 0 4px 12px ${bgColor}80;"
+                               onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 18px ${bgColor}80'; this.style.background='#3d8b40';"
+                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px ${bgColor}80'; this.style.background='${bgColor}';">
+                                <span>${buttonText}</span>
+                                <span style="font-size: 18px;">→</span>
+                            </a>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Если не удалось получить embed URL
+                html += `
+                    <div class="video-item exercise-video" style="margin-bottom: 30px; padding: 30px; background: linear-gradient(135deg, ${bgColorLight} 0%, ${bgColorMedium} 100%); border: 2px solid ${borderColor}; border-radius: 24px; text-align: center;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">${icon}</div>
+                        <h3 style="margin: 0 0 15px 0; color: #1A1A1A; font-size: 24px; font-weight: 600;">${itemTitle}</h3>
+                        <p style="margin: 0 0 25px 0; color: #666;">Это упражнение доступно для просмотра только на Rutube</p>
                         <a href="${videoUrl}" target="_blank" 
                            style="display: inline-block; padding: 14px 32px; background: ${bgColor}; color: white; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px;">
                             ${buttonText} →
