@@ -1525,34 +1525,11 @@ function getRutubeEmbedUrl(url) {
 /**
  * Функция для извлечения ID изображения из ссылки Pinterest
  */
-function extractPinterestImageUrl(url) {
-    if (!url) return null;
-    
-    // Если это уже прямая ссылка на изображение Pinterest
-    if (url.includes('i.pinimg.com') && (url.includes('.jpg') || url.includes('.png') || url.includes('.jpeg') || url.includes('.webp'))) {
-        return url;
-    }
-    
-    // Пробуем извлечь ID из разных форматов ссылок Pinterest
-    const pinMatch = url.match(/pinterest\.com\/pin\/(\d+)/i) || 
-                     url.match(/pin\/(\d+)/i) ||
-                     url.match(/\/pin\/(\d+)/i);
-    
-    if (pinMatch) {
-        const pinId = pinMatch[1];
-        const folder = Math.abs(parseInt(pinId) % 1000).toString().padStart(3, '0');
-        return `https://i.pinimg.com/originals/${folder}/${pinId}.jpg`;
-    }
-    
-    // Если это pin.it ссылка, возвращаем как есть
-    if (url.includes('pin.it/')) {
-        console.warn('⚠️ Используйте прямые ссылки на изображения Pinterest (i.pinimg.com) для лучшей совместимости');
-        return url;
-    }
-    
-    return url;
-}
 
+
+/**
+ * Загрузка рекомендаций из базы данных
+ */
 /**
  * Загрузка рекомендаций из базы данных
  */
@@ -1570,16 +1547,7 @@ async function loadRecommendationsFromDB(emotionCode) {
         const data = await response.json();
         console.log('🔴🔴🔴 ПОЛНЫЙ ОТВЕТ ОТ СЕРВЕРА:', JSON.stringify(data, null, 2));
         
-        // Проверяем все возможные структуры
-        console.log('🔍 Проверка структуры:');
-        console.log('  - data.material?.exercise:', data.material?.exercise);
-        console.log('  - data.material?.exercises:', data.material?.exercises);
-        console.log('  - data.exercise:', data.exercise);
-        console.log('  - data.exercises:', data.exercises);
-        console.log('  - data.materials?.exercise:', data.materials?.exercise);
-        console.log('  - data.materials?.exercises:', data.materials?.exercises);
-        
-        // Проверяем, есть ли поле material
+        // Проверяем структуру с полем "material"
         if (data.material) {
             console.log('🔴 Данные пришли в формате material');
             
@@ -1588,7 +1556,7 @@ async function loadRecommendationsFromDB(emotionCode) {
                 music: data.material.music || [],
                 video: data.material.video || [],
                 images: data.material.images || [],
-                exercise: data.material.exercise || data.material.exercises || [], // Пробуем оба варианта
+                exercise: data.material.exercises || [], // ИЗМЕНЕНО: exercises → exercise
                 articles: data.material.articles || []
             };
             
@@ -1596,10 +1564,8 @@ async function loadRecommendationsFromDB(emotionCode) {
             window.currentEmotionMaterials = materialData;
             
         } else if (data.materials) {
-            console.log('🔴 Данные пришли в формате materials');
             window.currentEmotionMaterials = data.materials;
         } else if (Array.isArray(data)) {
-            console.log('🔴 Данные пришли как массив');
             // Группируем данные по типу
             const groupedData = {
                 music: [],
@@ -1638,7 +1604,6 @@ async function loadRecommendationsFromDB(emotionCode) {
                 }
             });
             
-            console.log('🔴 Сгруппированные данные:', groupedData);
             window.currentEmotionMaterials = groupedData;
         } else {
             console.warn('Неизвестная структура данных:', data);
