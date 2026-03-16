@@ -1184,7 +1184,6 @@
 //     }
 // `;
 // document.head.appendChild(style);
-
 import { API_URL } from "./const/const.js";
 
 // Глобальная переменная для хранения материалов
@@ -1557,9 +1556,6 @@ function extractPinterestImageUrl(url) {
 /**
  * Загрузка рекомендаций из базы данных
  */
-/**
- * Загрузка рекомендаций из базы данных
- */
 async function loadRecommendationsFromDB(emotionCode) {
     try {
         const response = await fetch(`${API_URL}/api/recommendation?emotion=${emotionCode}`);
@@ -1569,88 +1565,75 @@ async function loadRecommendationsFromDB(emotionCode) {
         }
         
         const data = await response.json();
-        console.log('🔴🔴🔴 ПОЛНЫЙ ОТВЕТ ОТ СЕРВЕРА:', JSON.stringify(data, null, 2));
+        console.log('Данные из базы данных:', data);
         
-        // Группируем данные по типу, если они пришли как массив
-        if (Array.isArray(data)) {
-            console.log('🔴 Данные пришли как МАССИВ из', data.length, 'элементов');
+        // Проверяем структуру с полем "material"
+        if (data.material) {
+            console.log('🔴 Данные пришли в формате material');
             
+            // Извлекаем данные из material
+            const materialData = {
+                music: data.material.music || [],
+                video: data.material.video || [],
+                images: data.material.images || [],
+                exercise: data.material.exercise || [],      // Изменено с exercises на exercise
+                articles: data.material.articles || []
+            };
+            
+            console.log('🔴 Данные после обработки:', materialData);
+            window.currentEmotionMaterials = materialData;
+            
+        } else if (data.materials) {
+            window.currentEmotionMaterials = data.materials;
+        } else if (Array.isArray(data)) {
+            // Группируем данные по типу
             const groupedData = {
                 music: [],
                 video: [],
                 images: [],
-                exercises: [],
+                exercise: [],        // Изменено с exercises на exercise
                 articles: []
             };
             
-            data.forEach((item, index) => {
-                console.log(`\n🔴 Элемент #${index + 1}:`);
-                console.log('  - Все поля:', Object.keys(item));
-                console.log('  - type:', item.type);
-                console.log('  - title:', item.title);
-                console.log('  - url:', item.url);
-                
+            data.forEach(item => {
                 const type = item.type?.toLowerCase();
                 const unifiedItem = {
                     id: item.id,
                     title: item.title || 'Без названия',
-                    description: item.description || '',
+                    description: item.description || item.subtitle || item.body || '',
                     url: item.url || '',
                     author: item.author || ''
                 };
                 
                 switch(type) {
                     case 'music':
-                        console.log('  ✅ Добавляем в MUSIC');
                         groupedData.music.push(unifiedItem);
                         break;
                     case 'video':
-                        console.log('  ✅ Добавляем в VIDEO');
                         groupedData.video.push(unifiedItem);
                         break;
                     case 'image':
-                        console.log('  ✅ Добавляем в IMAGES');
                         groupedData.images.push(unifiedItem);
                         break;
                     case 'exercise':
-                        console.log('  ✅ Добавляем в EXERCISES');
-                        groupedData.exercises.push(unifiedItem);
+                        groupedData.exercise.push(unifiedItem);  // Изменено с exercises на exercise
                         break;
                     case 'article':
-                        console.log('  ✅ Добавляем в ARTICLES');
                         groupedData.articles.push(unifiedItem);
                         break;
-                    default:
-                        console.log('  ❌ НЕИЗВЕСТНЫЙ ТИП:', type);
                 }
             });
             
-            console.log('\n🔴🔴🔴 ИТОГОВЫЕ СГРУППИРОВАННЫЕ ДАННЫЕ:');
-            console.log('  music:', groupedData.music.length);
-            console.log('  video:', groupedData.video.length);
-            console.log('  images:', groupedData.images.length);
-            console.log('  exercises:', groupedData.exercises.length);
-            console.log('  articles:', groupedData.articles.length);
-            
             window.currentEmotionMaterials = groupedData;
-        } else if (data.materials) {
-            console.log('🔴 Данные пришли в формате materials');
-            window.currentEmotionMaterials = data.materials;
-        } else if (data.material) {
-            console.log('🔴 Данные пришли в формате material');
-            window.currentEmotionMaterials = data.material;
-        } else if (data.music || data.video || data.images || data.exercises || data.articles) {
-            console.log('🔴 Данные пришли уже сгруппированными');
-            window.currentEmotionMaterials = data;
         } else {
-            console.warn('🔴 Неизвестная структура данных:', data);
+            console.warn('Неизвестная структура данных:', data);
             window.currentEmotionMaterials = detectMaterialsStructure(data);
         }
         
-        console.log('🔴🔴🔴 window.currentEmotionMaterials после обработки:', window.currentEmotionMaterials);
+        console.log('Обработанные материалы из БД:', window.currentEmotionMaterials);
         
     } catch (error) {
-        console.error('❌ Ошибка при загрузке из базы данных:', error);
+        console.error('Ошибка при загрузке из базы данных:', error);
         displayError('Не удалось загрузить материалы из базы данных');
     }
 }
@@ -1663,7 +1646,7 @@ function detectMaterialsStructure(data) {
         music: [],
         video: [],
         images: [],
-        exercises: [],
+        exercise: [],        // Изменено с exercises на exercise
         articles: []
     };
     
@@ -1800,7 +1783,7 @@ async function showTabContent(tabId, container) {
         'music': 'music',
         'video': 'video',
         'images': 'images',
-        'exercises': 'exercises',
+        'exercise': 'exercise',        // Изменено с exercises на exercise
         'articles': 'articles'
     };
     
@@ -1823,7 +1806,7 @@ function getIconForTab(tabId) {
         'music': '🎵',
         'video': '🎬',
         'images': '🖼️',
-        'exercises': '🏋️',
+        'exercise': '🏋️',        // Изменено с exercises на exercise
         'articles': '🔗'
     };
     return icons[tabId] || '📁';
@@ -1834,7 +1817,7 @@ function getTitleForTab(tabId) {
         'music': 'Музыка',
         'video': 'Видео',
         'images': 'Картинки',
-        'exercises': 'Видео-упражнения',
+        'exercise': 'Видео-упражнения',   // Изменено с exercises на exercise
         'articles': 'Статьи'
     };
     return titles[tabId] || tabId;
@@ -1848,8 +1831,8 @@ async function renderTabContent(tabId, items) {
             return renderMusic(items);
         case 'video':
             return renderRutubeVideos(items);
-        case 'exercises':
-            return renderRutubeExercises(items);
+        case 'exercise':                     // Изменено с exercises на exercise
+            return renderRutubeExercise(items); // Изменено с renderRutubeExercises на renderRutubeExercise
         case 'articles':
             return renderArticlesWithLink(items);
         default:
@@ -2181,9 +2164,9 @@ function renderRutubeVideos(items) {
 
 /**
  * Функция для рендеринга упражнений с Rutube (ЗЕЛЕНЫЙ СТИЛЬ)
- * Вызывается для type = 'exercise'
+ * Вызывается для type = 'exercise' - ИЗМЕНЕНО НАЗВАНИЕ ФУНКЦИИ
  */
-function renderRutubeExercises(items) {
+function renderRutubeExercise(items) {
     console.log('🏋️ Рендерим УПРАЖНЕНИЯ (зеленый стиль), элементов:', items.length);
     
     let html = '<div class="video-list exercise-videos">';
@@ -2380,7 +2363,7 @@ function getEmptyStateHTML(tabId) {
         'music': '🎵 В базе данных нет музыкальных материалов для этой эмоции',
         'video': '🎬 В базе данных нет видео с Rutube для этой эмоции',
         'images': '🖼️ В базе данных нет изображений для этой эмоции',
-        'exercises': '🏋️ В базе данных нет видео-упражнений для этой эмоции',
+        'exercise': '🏋️ В базе данных нет видео-упражнений для этой эмоции',  // Изменено с exercises на exercise
         'articles': '📄 В базе данных нет статей для этой эмоции'
     };
     
@@ -2518,4 +2501,3 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
-
