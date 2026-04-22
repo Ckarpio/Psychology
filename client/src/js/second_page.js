@@ -665,6 +665,8 @@ async function loadRecommendationsFromDB(emotionCode) {
         const response = await fetch(`${API_URL}/api/recommendation?emotion=${emotionCode}`);
         const data = await response.json();
         
+        console.log('Полученные данные:', data);
+        
         if (data.material) {
             window.currentEmotionMaterials = {
                 music: data.material.music || [],
@@ -673,6 +675,8 @@ async function loadRecommendationsFromDB(emotionCode) {
                 exercises: data.material.exercises || [],
                 articles: data.material.articles || []
             };
+            
+            console.log('Загружено статей:', window.currentEmotionMaterials.articles.length);
         }
     } catch (error) {
         console.error('Ошибка загрузки:', error);
@@ -784,13 +788,14 @@ function renderMusic(items) {
     let html = '<div class="music-list">';
     
     items.forEach(item => {
+        const url = item.url || item.link || '';
         html += `
             <div class="music-card">
                 <div class="music-icon">🎵</div>
                 <div class="music-info">
                     <h3>${escapeHtml(item.title || 'Трек')}</h3>
                     ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
-                    <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="music-btn">Слушать в VK</a>
+                    ${url ? `<a href="${url}" target="_blank" rel="noopener noreferrer" class="music-btn">Слушать в VK</a>` : '<div class="no-link">Ссылка отсутствует</div>'}
                 </div>
             </div>
         `;
@@ -814,7 +819,7 @@ function renderRutubeVideos(items) {
                 <div class="video-container">
                     <iframe src="${info.embedUrl}" allowfullscreen></iframe>
                 </div>
-                <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="video-btn">Смотреть на Rutube</a>
+                <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="video-btn">Смотреть на Rutube</a>
             </div>
         `;
     });
@@ -837,7 +842,7 @@ function renderRutubeExercises(items) {
                 <div class="video-container">
                     <iframe src="${info.embedUrl}" allowfullscreen></iframe>
                 </div>
-                <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="exercise-btn">Смотреть упражнение</a>
+                <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="exercise-btn">Смотреть упражнение</a>
             </div>
         `;
     });
@@ -845,42 +850,65 @@ function renderRutubeExercises(items) {
     return html + '</div>';
 }
 
-// Рендеринг статей (ОБНОВЛЕННАЯ ВЕРСИЯ - ПОДДЕРЖИВАЕТ ЛЮБЫЕ ССЫЛКИ)
+// Рендеринг статей (ИСПРАВЛЕННАЯ ВЕРСИЯ - РАБОТАЮТ ВСЕ ССЫЛКИ)
 function renderArticles(items) {
+    console.log('Рендеринг статей, получено элементов:', items.length);
+    
+    if (!items || items.length === 0) {
+        return '<div class="empty-state">📄 Нет статей</div>';
+    }
+    
     let html = '<div class="articles-list">';
     
-    items.forEach(item => {
-        // Проверяем наличие URL
-        const hasValidUrl = item.url && item.url.trim() !== '';
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        
+        // Получаем URL из разных возможных полей
+        let url = '';
+        if (item.url) {
+            url = item.url;
+        } else if (item.link) {
+            url = item.link;
+        } else if (item.href) {
+            url = item.href;
+        }
+        
+        // Очищаем URL
+        url = url ? url.trim() : '';
+        
+        const title = item.title || 'Статья';
+        const description = item.description || '';
+        
+        console.log(`Статья ${i+1}: "${title}" -> URL: "${url}"`);
         
         // Определяем тип сайта для иконки
         let siteIcon = '🔗';
         let siteName = 'Перейти по ссылке';
         
-        if (hasValidUrl) {
-            const url = item.url.toLowerCase();
-            if (url.includes('wikipedia.org')) {
+        if (url) {
+            const urlLower = url.toLowerCase();
+            if (urlLower.includes('wikipedia.org')) {
                 siteIcon = '📚';
                 siteName = 'Читать в Wikipedia';
-            } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            } else if (urlLower.includes('youtube.com') || urlLower.includes('youtu.be')) {
                 siteIcon = '📺';
                 siteName = 'Смотреть на YouTube';
-            } else if (url.includes('rutube.ru')) {
+            } else if (urlLower.includes('rutube.ru')) {
                 siteIcon = '🎬';
                 siteName = 'Смотреть на Rutube';
-            } else if (url.includes('vk.com')) {
+            } else if (urlLower.includes('vk.com')) {
                 siteIcon = '🎵';
                 siteName = 'Открыть ВКонтакте';
-            } else if (url.includes('habr.com')) {
+            } else if (urlLower.includes('habr.com')) {
                 siteIcon = '💻';
                 siteName = 'Читать на Habr';
-            } else if (url.includes('medium.com')) {
+            } else if (urlLower.includes('medium.com')) {
                 siteIcon = '📝';
                 siteName = 'Читать на Medium';
-            } else if (url.includes('telegram.org') || url.includes('t.me')) {
+            } else if (urlLower.includes('telegram.org') || urlLower.includes('t.me')) {
                 siteIcon = '📱';
                 siteName = 'Открыть в Telegram';
-            } else if (url.includes('zen.yandex.ru') || url.includes('dzen.ru')) {
+            } else if (urlLower.includes('zen.yandex.ru') || urlLower.includes('dzen.ru')) {
                 siteIcon = '📰';
                 siteName = 'Читать в Дзен';
             }
@@ -888,21 +916,23 @@ function renderArticles(items) {
         
         html += `
             <div class="article-card">
-                <h3>📄 ${escapeHtml(item.title || 'Статья')}</h3>
-                ${item.description ? `<div class="article-text">${escapeHtml(item.description)}</div>` : ''}
-                ${hasValidUrl ? `
-                    <a href="${escapeHtml(item.url)}" 
+                <h3>📄 ${escapeHtml(title)}</h3>
+                ${description ? `<div class="article-text">${escapeHtml(description)}</div>` : ''}
+                ${url ? `
+                    <a href="${url}" 
                        target="_blank" 
                        rel="noopener noreferrer" 
-                       class="article-btn">
+                       class="article-btn"
+                       onclick="console.log('Клик по ссылке: ${url}')">
                         ${siteIcon} ${siteName}
                     </a>
-                ` : ''}
+                ` : '<div class="no-link">⚠️ Ссылка не указана</div>'}
             </div>
         `;
-    });
+    }
     
-    return html + '</div>';
+    html += '</div>';
+    return html;
 }
 
 // Вспомогательная функция для экранирования HTML
@@ -944,7 +974,7 @@ function displayError(message) {
     }
 }
 
-// Добавляем CSS в стиле первой страницы
+// Добавляем CSS
 const style = document.createElement('style');
 style.textContent = `
     .tab-title {
@@ -1151,6 +1181,15 @@ style.textContent = `
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
         background: linear-gradient(135deg, #F57C00, #E65100);
+    }
+    
+    .no-link {
+        padding: 10px;
+        background: #f5f5f5;
+        border-radius: 8px;
+        color: #999;
+        text-align: center;
+        font-size: 14px;
     }
     
     .empty-state {
