@@ -659,13 +659,14 @@ function parseVKUrl(url) {
     return { type: 'track', icon: '🎵' };
 }
 
-// Загрузка данных
+// Загрузка данных из БД
 async function loadRecommendationsFromDB(emotionCode) {
     try {
         const response = await fetch(`${API_URL}/api/recommendation?emotion=${emotionCode}`);
         const data = await response.json();
         
-        console.log('Полученные данные:', data);
+        console.log('=== ДАННЫЕ ИЗ БАЗЫ ДАННЫХ ===');
+        console.log('Полный ответ:', data);
         
         if (data.material) {
             window.currentEmotionMaterials = {
@@ -676,7 +677,19 @@ async function loadRecommendationsFromDB(emotionCode) {
                 articles: data.material.articles || []
             };
             
-            console.log('Загружено статей:', window.currentEmotionMaterials.articles.length);
+            console.log('Статьи из БД:', window.currentEmotionMaterials.articles);
+            console.log('Количество статей:', window.currentEmotionMaterials.articles.length);
+            
+            // Выводим каждую статью для проверки
+            window.currentEmotionMaterials.articles.forEach((article, index) => {
+                console.log(`Статья ${index + 1}:`, {
+                    title: article.title,
+                    url: article.url,
+                    description: article.description
+                });
+            });
+        } else {
+            console.log('Нет поля material в ответе');
         }
     } catch (error) {
         console.error('Ошибка загрузки:', error);
@@ -850,9 +863,10 @@ function renderRutubeExercises(items) {
     return html + '</div>';
 }
 
-// Рендеринг статей (ИСПРАВЛЕННАЯ ВЕРСИЯ - РАБОТАЮТ ВСЕ ССЫЛКИ)
+// Рендеринг статей - РАБОЧАЯ ВЕРСИЯ ДЛЯ ЛЮБЫХ ССЫЛОК ИЗ БД
 function renderArticles(items) {
-    console.log('Рендеринг статей, получено элементов:', items.length);
+    console.log('=== РЕНДЕРИНГ СТАТЕЙ ===');
+    console.log('Получено элементов:', items.length);
     
     if (!items || items.length === 0) {
         return '<div class="empty-state">📄 Нет статей</div>';
@@ -879,54 +893,34 @@ function renderArticles(items) {
         const title = item.title || 'Статья';
         const description = item.description || '';
         
-        console.log(`Статья ${i+1}: "${title}" -> URL: "${url}"`);
+        console.log(`Статья ${i + 1}: "${title}"`);
+        console.log(`  URL: "${url}"`);
+        console.log(`  Описание: "${description.substring(0, 50)}..."`);
         
-        // Определяем тип сайта для иконки
-        let siteIcon = '🔗';
-        let siteName = 'Перейти по ссылке';
+        // Проверяем валидность URL
+        const isValidUrl = url && url !== '' && url !== '#' && url !== 'javascript:void(0)';
         
-        if (url) {
-            const urlLower = url.toLowerCase();
-            if (urlLower.includes('wikipedia.org')) {
-                siteIcon = '📚';
-                siteName = 'Читать в Wikipedia';
-            } else if (urlLower.includes('youtube.com') || urlLower.includes('youtu.be')) {
-                siteIcon = '📺';
-                siteName = 'Смотреть на YouTube';
-            } else if (urlLower.includes('rutube.ru')) {
-                siteIcon = '🎬';
-                siteName = 'Смотреть на Rutube';
-            } else if (urlLower.includes('vk.com')) {
-                siteIcon = '🎵';
-                siteName = 'Открыть ВКонтакте';
-            } else if (urlLower.includes('habr.com')) {
-                siteIcon = '💻';
-                siteName = 'Читать на Habr';
-            } else if (urlLower.includes('medium.com')) {
-                siteIcon = '📝';
-                siteName = 'Читать на Medium';
-            } else if (urlLower.includes('telegram.org') || urlLower.includes('t.me')) {
-                siteIcon = '📱';
-                siteName = 'Открыть в Telegram';
-            } else if (urlLower.includes('zen.yandex.ru') || urlLower.includes('dzen.ru')) {
-                siteIcon = '📰';
-                siteName = 'Читать в Дзен';
-            }
+        if (!isValidUrl) {
+            console.warn(`  ⚠️ У статьи "${title}" нет валидной ссылки!`);
         }
         
         html += `
             <div class="article-card">
                 <h3>📄 ${escapeHtml(title)}</h3>
                 ${description ? `<div class="article-text">${escapeHtml(description)}</div>` : ''}
-                ${url ? `
+                ${isValidUrl ? `
                     <a href="${url}" 
                        target="_blank" 
                        rel="noopener noreferrer" 
                        class="article-btn"
-                       onclick="console.log('Клик по ссылке: ${url}')">
-                        ${siteIcon} ${siteName}
+                       title="Открыть: ${url}">
+                        🔗 Читать статью
                     </a>
-                ` : '<div class="no-link">⚠️ Ссылка не указана</div>'}
+                ` : `
+                    <div class="no-link">
+                        ⚠️ Ссылка не указана
+                    </div>
+                `}
             </div>
         `;
     }
@@ -1175,6 +1169,7 @@ style.textContent = `
         font-size: 14px;
         transition: all 0.3s ease;
         box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+        cursor: pointer;
     }
     
     .article-btn:hover {
